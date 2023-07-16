@@ -49,7 +49,9 @@ export areaIntersectsArea = (j, k) => pipe(
   },
 )([j, k])
 
-type Dungeon = Dungeon(Seed, Float, Float, List Tile)
+alias TileMap = List (List Tile)
+
+type Dungeon = Dungeon(Seed, Float, Float, TileMap)
 
 minimum :: Float -> Float -> Float
 minimum = (m, x) => x < m ? m : x
@@ -71,7 +73,19 @@ alias Neighbors = {
   w :: Float,
 }
 
-alias TileMap = List (List Tile)
+
+makeTileMap :: Float -> Float -> TileMap
+export makeTileMap = (width, height) => pipe(
+  Number.floatToInteger,
+  List.range(0),
+  map(
+    (x) => pipe(
+      Number.floatToInteger,
+      List.range(0),
+      map((y) => Tile(TileWall, Number.integerToFloat(x), Number.integerToFloat(y))),
+    )(height),
+  ),
+)(width)
 
 getNeighbors :: TileMap -> Float -> Float -> {}
 getNeighbors = (tiles, x, y) => {}
@@ -86,5 +100,6 @@ export createDungeon = (_seed, _width, _height) => {
   )
   width = stageDim(_width)
   height = stageDim(_height)
-  return Dungeon(seed, width, height, [])
+  tiles = makeTileMap(width, height)
+  return Dungeon(seed, width, height, tiles)
 }
