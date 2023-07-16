@@ -1,0 +1,17 @@
+import IO from "IO"
+import Math from "Math"
+
+import Dungeon from "./Dungeon"
+import Vector from "./Vector"
+
+
+
+main = () => {
+  IO.trace("-10 - 10", Math.min(-10, 10))
+  IO.trace("-100 - -10", Math.min(-100, -10))
+  IO.trace("max: -100 - -10", Math.max(-100, -10))
+  IO.trace("max: -10 - 10", Math.max(-10, 10))
+  pipe(
+    IO.trace("DUNGY!"),
+  )(Dungeon.createDungeon("dungdong", 2.0, 10.0))
+}

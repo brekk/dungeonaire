@@ -1,0 +1,17 @@
+import { fst, snd } from "Tuple"
+
+
+
+export type Vector = Vector(Float, Float)
+
+toTuple :: Vector -> #[Float, Float]
+export toTuple = where {
+  Vector(x, y) =>
+    #[x, y]
+}
+
+add :: Vector -> Vector -> Vector
+export add = (a, b) => where(#[a, b]) {
+  #[Vector(ax, ay), Vector(bx, by)] =>
+    Vector(ax + bx, ay + by)
+}
