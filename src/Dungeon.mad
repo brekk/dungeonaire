@@ -1,7 +1,10 @@
+import type { Maybe } from "Maybe"
+
 import type { Seed } from "./LCG"
 
 import List from "List"
 import Math from "Math"
+import { Just, Nothing } from "Maybe"
 import Number from "Number"
 
 import LCG from "./LCG"
@@ -62,16 +65,28 @@ export isEven = (x) => Math.mod(Number.floatToInteger(x), 2) == 0
 makeOdd :: Float -> Float
 export makeOdd = (x) => isEven(x) ? x + 1.0 : x
 
-alias Neighbors = {
-  e :: Float,
-  n :: Float,
-  ne :: Float,
-  nw :: Float,
-  s :: Float,
-  se :: Float,
-  sw :: Float,
-  w :: Float,
+export alias Neighbors = {
+  e :: Maybe Tile,
+  n :: Maybe Tile,
+  ne :: Maybe Tile,
+  nw :: Maybe Tile,
+  s :: Maybe Tile,
+  se :: Maybe Tile,
+  sw :: Maybe Tile,
+  w :: Maybe Tile,
 }
+
+atIndex :: TileMap -> Float -> Float -> Maybe Tile
+export atIndex = (tileMap, x, y) => pipe(
+  List.nth(Number.floatToInteger(x)),
+  where {
+    Just(xs) =>
+      List.nth(Number.floatToInteger(y), xs)
+
+    Nothing =>
+      Nothing
+  },
+)(tileMap)
 
 
 makeTileMap :: Float -> Float -> TileMap
@@ -87,8 +102,72 @@ export makeTileMap = (width, height) => pipe(
   ),
 )(width)
 
-getNeighbors :: TileMap -> Float -> Float -> {}
-getNeighbors = (tiles, x, y) => {}
+getNeighbors :: TileMap -> Float -> Float -> Neighbors
+getNeighbors = (tiles, x, y) => {
+  at = atIndex(tiles)
+  return {
+    e: at(x + 1, y),
+    n: at(x, y - 1),
+    ne: at(x + 1, y - 1),
+    nw: at(x - 1, y - 1),
+    s: at(x, y + 1),
+    se: at(x + 1, y + 1),
+    sw: at(x - 1, y + 1),
+    w: at(x - 1, y),
+  }
+}
+
+getDimension :: Boolean -> Float -> Float -> Float
+export getDimension = (isHotdog, extra, x) => isHotdog ? x + extra : x
+
+boundByStageWithDefault :: Float -> Float -> Float -> Float
+export boundByStageWithDefault = (edge, minima, dimension) => Math.min(minima, dimension - edge)
+
+boundByStage :: Float -> Float -> Float
+export boundByStage = boundByStageWithDefault(4.0)
+
+getRoomSize :: Boolean -> Float -> Float -> Float -> Float
+getRoomSize = (isHotdog, edge, extra, x) => pipe(
+  getDimension(isHotdog, extra),
+  boundByStage(edge),
+)(x)
+
+randomPoint :: Float -> Float -> Seed -> Float
+randomPoint = (max, roomSize, seed) => pipe(
+  Math.floor,
+  Number.floatToInteger,
+  LCG.toInt(0, $, seed),
+  (y) => y * 2 + 1,
+  Number.integerToFloat,
+)((max - roomSize) / 2)
+
+
+makeRandomRoom :: Float -> Float -> Float -> Seed -> Area
+makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
+  size = LCG.toInt(1, 3 + Number.floatToInteger(pad), seed) * 2 + 1
+  rectangularity = LCG.toInt(0, Number.floatToInteger(Math.floor(size / 2) + 1), seed) * 2
+  isHotdog = LCG.oneIn(2, seed)
+  width = getRoomSize(
+    isHotdog,
+    stageWidth,
+    Number.integerToFloat(rectangularity),
+    Number.integerToFloat(size),
+  )
+  height = getRoomSize(
+    !isHotdog,
+    stageHeight,
+    Number.integerToFloat(rectangularity),
+    Number.integerToFloat(size),
+  )
+  x = randomPoint(stageWidth, width, seed)
+  y = randomPoint(stageHeight, height, seed)
+
+  return Room(x, y, width, height)
+}
+
+makeRooms :: Float -> Float -> Float -> Seed -> List Area
+makeRooms = (stageWidth, stageHeight, pad, seed) => []
+
 
 createDungeon :: String -> Float -> Float -> Dungeon
 export createDungeon = (_seed, _width, _height) => {
