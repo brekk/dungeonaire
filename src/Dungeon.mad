@@ -13,8 +13,6 @@ import LCG from "./LCG"
 
 
 
-K = Fn.always
-
 export type TileType = TileWall | TileFloor | TileDoor | TileHazard | TileVoid
 
 // type x y
@@ -140,7 +138,7 @@ randomPoint = (max, size, seed) => pipe(
   LCG.toInt(0, $, seed),
   (r) => r * 2 + 1,
   Number.integerToFloat,
-  Fn.when((v) => v + size > max, K(Number.integerToFloat(Math.max(1, max - size - 1)))),
+  Fn.when((v) => v + size > max, Fn.always(Number.integerToFloat(Math.max(1, max - size - 1)))),
 )((max - size) / 2)
 
 calcRoomSize :: Float -> Float -> Float -> Float -> Float

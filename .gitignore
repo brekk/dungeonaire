@@ -1,3 +1,5 @@
 .repl
 .coverage
 build
+.tests
+.module_cache
