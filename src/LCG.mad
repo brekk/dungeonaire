@@ -190,7 +190,6 @@ export accumulate = (fn, steps, initial) => pipe(
 stepN :: Integer -> Seed -> Seed
 export stepN = accumulate(next)
 
-
 /**
  * Simple wrapper function to create a SeededTuple
  * @since 0.0.1

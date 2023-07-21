@@ -3,6 +3,7 @@ import type { Maybe } from "Maybe"
 import type { Seed } from "./LCG"
 
 import Fn from "Function"
+import IO from "IO"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
@@ -11,6 +12,8 @@ import Number from "Number"
 import LCG from "./LCG"
 
 
+
+K = Fn.always
 
 export type TileType = TileWall | TileFloor | TileDoor | TileHazard | TileVoid
 
@@ -26,10 +29,10 @@ export type BoundingBox = Box(Float, Float, Float, Float)
 getBoundingBox :: Area -> BoundingBox
 export getBoundingBox = (room) => where(room) {
   Room(x, y, w, h) =>
-    Box(y, x + w - 1.0, y + h - 1.0, x)
+    Box(y, x + w, y + h, x)
 
   Stage(x, y, w, h) =>
-    Box(y, x + w - 1.0, y + h - 1.0, x)
+    Box(y, x + w, y + h, x)
 }
 
 areaContainsPoint :: Area -> Float -> Float -> Boolean
@@ -101,6 +104,7 @@ export makeTileMap = (width, height) => pipe(
       map((y) => Tile(TileWall, Number.integerToFloat(x), Number.integerToFloat(y))),
     )(height),
   ),
+  IO.trace("tilemap!"),
 )(width)
 
 getNeighbors :: TileMap -> Float -> Float -> Neighbors
@@ -122,52 +126,47 @@ getDimension :: Boolean -> Float -> Float -> Float
 export getDimension = (isHotdog, extra, x) => isHotdog ? x + extra : x
 
 boundByStageWithDefault :: Float -> Float -> Float -> Float
-export boundByStageWithDefault = (edge, minima, dimension) => Math.min(minima, dimension - edge)
+export boundByStageWithDefault = (edge, minima, dimension) => minimum(minima, dimension - edge)
+
+
 
 boundByStage :: Float -> Float -> Float
 export boundByStage = boundByStageWithDefault(4.0)
 
-getRoomSize :: Boolean -> Float -> Float -> Float -> Float
-getRoomSize = (isHotdog, edge, extra, x) => pipe(
-  getDimension(isHotdog, extra),
-  boundByStage(edge),
-  Math.min(3.0),
-)(x)
-
 randomPoint :: Float -> Float -> Seed -> Float
-randomPoint = (max, roomSize, seed) => pipe(
+randomPoint = (max, size, seed) => pipe(
   Math.floor,
   Number.floatToInteger,
   LCG.toInt(0, $, seed),
-  (y) => y * 2 + 1,
+  (r) => r * 2 + 1,
   Number.integerToFloat,
-)((max - roomSize) / 2)
+  Fn.when((v) => v + size > max, K(Number.integerToFloat(Math.max(1, max - size - 1)))),
+)((max - size) / 2)
 
+calcRoomSize :: Float -> Float -> Float -> Float -> Float
+calcRoomSize = (size, rectangularity, maximum, edgeDistance) => minimum(
+  maximum - edgeDistance,
+  size + rectangularity,
+)
 
 makeRandomRoom :: Float -> Float -> Float -> Seed -> Area
 makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
   size = LCG.toInt(1, 3 + Number.floatToInteger(pad), seed) * 2 + 1
   seed2 = LCG.next(seed)
-  rectangularity = LCG.toInt(0, Number.floatToInteger(Math.floor(size / 2) + 1), seed2) * 2
+  rectangularity = LCG.toInt(0, 1 + Number.floatToInteger(Math.floor(size / 2) + 1), seed2) * 2
   seed3 = LCG.stepN(2, seed)
-  isHotdog = LCG.oneIn(2, seed3)
-  width = getRoomSize(
-    isHotdog,
-    stageWidth,
-    Number.integerToFloat(rectangularity),
-    Number.integerToFloat(size),
-  )
-  height = getRoomSize(
-    !isHotdog,
-    stageHeight,
-    Number.integerToFloat(rectangularity),
-    Number.integerToFloat(size),
-  )
+  isHotdog = LCG.toBool(seed3)
+  frect = Number.integerToFloat(rectangularity)
+  fsize = Number.integerToFloat(size)
+  width = calcRoomSize(fsize, isHotdog ? 0 : frect, stageWidth, 4.0)
+  height = calcRoomSize(fsize, !isHotdog ? 0 : frect, stageHeight, 4.0)
   seed4 = LCG.stepN(3, seed)
   x = randomPoint(stageWidth, width, seed4)
   seed5 = LCG.stepN(4, seed)
-  y = randomPoint(stageHeight, height, seed5)
-  return Room(x, y, width, height)
+  y = randomPoint(stageHeight, width, seed5)
+  room = Room(x, y, width, height)
+  IO.trace("maybe room", room)
+  return room
 }
 
 anyAreaIntersectsArea :: List Area -> Area -> Boolean
@@ -183,7 +182,7 @@ makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
 createDungeon :: String -> Float -> Float -> Dungeon
 export createDungeon = (_seed, _width, _height) => {
   seed = LCG.mkSeedFromString(_seed)
-  min5 = Math.min(5.0)
+  min5 = minimum(5.0)
   stageDim = pipe(
     min5,
     makeOdd,
@@ -191,6 +190,6 @@ export createDungeon = (_seed, _width, _height) => {
   width = stageDim(_width)
   height = stageDim(_height)
   tiles = makeTileMap(width, height)
-  rooms = makeRooms(1000, width, height, 3.0, seed)
+  rooms = makeRooms(10000, width, height, 3.0, seed)
   return Dungeon(seed, width, height, tiles, rooms)
 }

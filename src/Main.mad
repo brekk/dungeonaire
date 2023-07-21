@@ -13,5 +13,5 @@ main = () => {
   IO.trace("max: -10 - 10", Math.max(-10, 10))
   pipe(
     IO.trace("DUNGY!"),
-  )(Dungeon.createDungeon("dungdong", 2.0, 10.0))
+  )(Dungeon.createDungeon("dungdong", 100.0, 100.0))
 }
