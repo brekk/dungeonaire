@@ -7,11 +7,9 @@ import Vector from "./Vector"
 
 
 main = () => {
-  IO.trace("-10 - 10", Math.min(-10, 10))
-  IO.trace("-100 - -10", Math.min(-100, -10))
-  IO.trace("max: -100 - -10", Math.max(-100, -10))
-  IO.trace("max: -10 - 10", Math.max(-10, 10))
+  IO.put("0123456789")
   pipe(
-    IO.trace("DUNGY!"),
-  )(Dungeon.createDungeon("dungdong", 100.0, 100.0))
+    Dungeon.render,
+    IO.put,
+  )(Dungeon.createDungeon("swapjabble", 20, 40))
 }

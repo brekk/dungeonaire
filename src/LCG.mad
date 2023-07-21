@@ -1,9 +1,11 @@
 import type { Maybe } from "Maybe"
 
+import Byte from "Byte"
 import ByteArray from "ByteArray"
+import Float from "Float"
+import Int from "Integer"
 import List from "List"
 import { floor, mod } from "Math"
-import { byteToInteger, floatToInteger, integerToFloat } from "Number"
 import Tuple from "Tuple"
 
 import { setMaybe } from "./List"
@@ -71,7 +73,7 @@ export LCG_C = 0
  */
 perturbation :: Integer -> Integer -> Integer -> Integer -> Integer
 export perturbation = (n, b, a, d) => mod(
-  floatToInteger(integerToFloat(b) * integerToFloat(n) + integerToFloat(a)),
+  Float.toInteger(Int.toFloat(b) * Int.toFloat(n) + Int.toFloat(a)),
   d,
 )
 
@@ -100,8 +102,8 @@ export modClamp = (min, max, x) => {
 intGradient :: Integer -> Integer -> Float -> Integer
 export intGradient = (low, high, f) => pipe(
   floor,
-  floatToInteger,
-)((integerToFloat(high) - integerToFloat(low) + 1.0) * f + integerToFloat(low))
+  Float.toInteger,
+)((Int.toFloat(high) - Int.toFloat(low) + 1.0) * f + Int.toFloat(low))
 
 /**
  * Make a Seed from an integer
@@ -119,7 +121,7 @@ stringToInt :: String -> Integer
 export stringToInt = pipe(
   ByteArray.fromString,
   ByteArray.reduce((hash, byte) => hash + (byte << 6) + (byte << 16), 0),
-  byteToInteger,
+  Byte.toInteger,
 )
 
 mkSeedFromString :: String -> Seed

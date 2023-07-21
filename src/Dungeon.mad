@@ -2,12 +2,16 @@ import type { Maybe } from "Maybe"
 
 import type { Seed } from "./LCG"
 
+import Float from "Float"
 import Fn from "Function"
 import IO from "IO"
+import Int from "Integer"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing } from "Maybe"
 import Number from "Number"
+import String from "String"
+import Terminal from "Terminal"
 
 import LCG from "./LCG"
 
@@ -16,13 +20,15 @@ import LCG from "./LCG"
 export type TileType = TileWall | TileFloor | TileDoor | TileHazard | TileVoid
 
 // type x y
-export type Tile = Tile(TileType, Float, Float)
+export type Tile = Tile(TileType, Integer, Integer)
 
 // x y width height
-export type Area = Room(Float, Float, Float, Float) | Stage(Float, Float, Float, Float)
+export type Area
+  = Room(Integer, Integer, Integer, Integer)
+  | Stage(Integer, Integer, Integer, Integer)
 
 // top right bottom left
-export type BoundingBox = Box(Float, Float, Float, Float)
+export type BoundingBox = Box(Integer, Integer, Integer, Integer)
 
 getBoundingBox :: Area -> BoundingBox
 export getBoundingBox = (room) => where(room) {
@@ -33,7 +39,7 @@ export getBoundingBox = (room) => where(room) {
     Box(y, x + w, y + h, x)
 }
 
-areaContainsPoint :: Area -> Float -> Float -> Boolean
+areaContainsPoint :: Area -> Integer -> Integer -> Boolean
 export areaContainsPoint = (room, x, y) => pipe(
   getBoundingBox,
   where {
@@ -56,16 +62,16 @@ export areaIntersectsArea = (j, k) => pipe(
 
 alias TileMap = List (List Tile)
 
-type Dungeon = Dungeon(Seed, Float, Float, TileMap, List Area)
+type Dungeon = Dungeon(Seed, Integer, Integer, TileMap, List Area)
 
-minimum :: Float -> Float -> Float
+minimum :: Integer -> Integer -> Integer
 minimum = (m, x) => x < m ? m : x
 
-isEven :: Float -> Boolean
-export isEven = (x) => Math.mod(Number.floatToInteger(x), 2) == 0
+isEven :: Integer -> Boolean
+export isEven = (x) => Math.mod(x, 2) == 0
 
-makeOdd :: Float -> Float
-export makeOdd = (x) => isEven(x) ? x + 1.0 : x
+makeOdd :: Integer -> Integer
+export makeOdd = (x) => isEven(x) ? x + 1 : x
 
 export alias Neighbors = {
   e :: Maybe Tile,
@@ -78,12 +84,12 @@ export alias Neighbors = {
   w :: Maybe Tile,
 }
 
-atIndex :: TileMap -> Float -> Float -> Maybe Tile
+atIndex :: TileMap -> Integer -> Integer -> Maybe Tile
 export atIndex = (tileMap, x, y) => pipe(
-  List.nth(Number.floatToInteger(x)),
+  List.nth(x),
   where {
     Just(xs) =>
-      List.nth(Number.floatToInteger(y), xs)
+      List.nth(y, xs)
 
     Nothing =>
       Nothing
@@ -91,21 +97,18 @@ export atIndex = (tileMap, x, y) => pipe(
 )(tileMap)
 
 
-makeTileMap :: Float -> Float -> TileMap
+makeTileMap :: Integer -> Integer -> TileMap
 export makeTileMap = (width, height) => pipe(
-  Number.floatToInteger,
   List.range(0),
   map(
     (x) => pipe(
-      Number.floatToInteger,
       List.range(0),
-      map((y) => Tile(TileWall, Number.integerToFloat(x), Number.integerToFloat(y))),
+      map((y) => Tile(TileWall, x, y)),
     )(height),
   ),
-  IO.trace("tilemap!"),
 )(width)
 
-getNeighbors :: TileMap -> Float -> Float -> Neighbors
+getNeighbors :: TileMap -> Integer -> Integer -> Neighbors
 getNeighbors = (tiles, x, y) => {
   at = atIndex(tiles)
   return {
@@ -120,67 +123,93 @@ getNeighbors = (tiles, x, y) => {
   }
 }
 
-getDimension :: Boolean -> Float -> Float -> Float
+getDimension :: Boolean -> Integer -> Integer -> Integer
 export getDimension = (isHotdog, extra, x) => isHotdog ? x + extra : x
 
-boundByStageWithDefault :: Float -> Float -> Float -> Float
+boundByStageWithDefault :: Integer -> Integer -> Integer -> Integer
 export boundByStageWithDefault = (edge, minima, dimension) => minimum(minima, dimension - edge)
 
 
 
-boundByStage :: Float -> Float -> Float
-export boundByStage = boundByStageWithDefault(4.0)
+boundByStage :: Integer -> Integer -> Integer
+export boundByStage = boundByStageWithDefault(4)
 
-randomPoint :: Float -> Float -> Seed -> Float
+randomPoint :: Integer -> Integer -> Seed -> Integer
 randomPoint = (max, size, seed) => pipe(
   Math.floor,
-  Number.floatToInteger,
+  Float.toInteger,
   LCG.toInt(0, $, seed),
   (r) => r * 2 + 1,
-  Number.integerToFloat,
-  Fn.when((v) => v + size > max, Fn.always(Number.integerToFloat(Math.max(1, max - size - 1)))),
+  Fn.when((v) => v + size > max, () => Math.max(1, max - size - 1)),
 )((max - size) / 2)
 
-calcRoomSize :: Float -> Float -> Float -> Float -> Float
-calcRoomSize = (size, rectangularity, maximum, edgeDistance) => minimum(
-  maximum - edgeDistance,
-  size + rectangularity,
+calcRoomSize :: Integer -> Integer -> Integer -> Integer -> Seed -> Integer
+calcRoomSize = (size, rectangularity, maximum, edgeDistance, seed) => Float.toInteger(
+  Math.round(
+    LCG.toFloat(seed) * Int.toFloat(minimum(maximum - edgeDistance, size + rectangularity)),
+  )
+    + 1,
 )
 
-makeRandomRoom :: Float -> Float -> Float -> Seed -> Area
+makeRandomRoom :: Integer -> Integer -> Integer -> Seed -> Area
 makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
-  size = LCG.toInt(1, 3 + Number.floatToInteger(pad), seed) * 2 + 1
+  size = LCG.toInt(1, 3 + pad, seed) * 2 + 1
   seed2 = LCG.next(seed)
-  rectangularity = LCG.toInt(0, 1 + Number.floatToInteger(Math.floor(size / 2) + 1), seed2) * 2
+  rect = LCG.toInt(0, 1 + Float.toInteger(Math.floor(size / 2) + 1), seed2) * 2
   seed3 = LCG.stepN(2, seed)
   isHotdog = LCG.toBool(seed3)
-  frect = Number.integerToFloat(rectangularity)
-  fsize = Number.integerToFloat(size)
-  width = calcRoomSize(fsize, isHotdog ? 0 : frect, stageWidth, 4.0)
-  height = calcRoomSize(fsize, !isHotdog ? 0 : frect, stageHeight, 4.0)
   seed4 = LCG.stepN(3, seed)
-  x = randomPoint(stageWidth, width, seed4)
+  width = calcRoomSize(size, isHotdog ? 0 : rect, stageWidth, 4, seed4)
   seed5 = LCG.stepN(4, seed)
-  y = randomPoint(stageHeight, width, seed5)
+  height = calcRoomSize(size, !isHotdog ? 0 : rect, stageHeight, 4, seed5)
+  seed6 = LCG.stepN(5, seed)
+  x = randomPoint(stageWidth, width, seed6)
+  seed7 = LCG.stepN(6, seed)
+  y = randomPoint(stageHeight, width, seed7)
   room = Room(x, y, width, height)
-  IO.trace("maybe room", room)
   return room
 }
 
 anyAreaIntersectsArea :: List Area -> Area -> Boolean
 export anyAreaIntersectsArea = (rooms, r) => Fn.any((room) => areaIntersectsArea(room, r), rooms)
 
-makeRooms :: Integer -> Float -> Float -> Float -> Seed -> List Area
+makeRooms :: Integer -> Integer -> Integer -> Integer -> Seed -> List Area
 makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
   LCG.iterate($, makeRandomRoom(stageWidth, stageHeight, pad), seed),
   List.reduce((agg, x) => { return !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg }, []),
 )(total)
 
+anyAreaContainsPoint :: List Area -> Integer -> Integer -> Boolean
+anyAreaContainsPoint = (areas, x, y) => Fn.any(areaContainsPoint($, x, y))(areas)
 
-createDungeon :: String -> Float -> Float -> Dungeon
+BLUE_HASH = Terminal.text.blue("#")
+RED_HASH = Terminal.text.red("#")
+
+renderTile :: List Area -> Tile -> String
+renderTile = (rooms, tile) => where(tile) {
+  Tile(tk, tx, ty) =>
+    Fn.ifElse(
+      anyAreaContainsPoint(rooms, tx),
+      Fn.always(" "),
+      (_) => tk == TileWall ? tx == 0 || ty == 0 ? RED_HASH : BLUE_HASH : "#",
+    )(ty)
+}
+
+render :: Dungeon -> String
+export render = pipe(
+  where {
+    Dungeon(_, _, _, tiles, rooms) =>
+      List.reduce((agg, rows) => List.append(map(renderTile(rooms))(rows), agg), [], tiles)
+  },
+  map(String.join("")),
+  String.join(RED_HASH ++ "\n"),
+  (r) => r ++ RED_HASH ++ "\n",
+)
+
+createDungeon :: String -> Integer -> Integer -> Dungeon
 export createDungeon = (_seed, _width, _height) => {
   seed = LCG.mkSeedFromString(_seed)
-  min5 = minimum(5.0)
+  min5 = minimum(5)
   stageDim = pipe(
     min5,
     makeOdd,
@@ -188,6 +217,7 @@ export createDungeon = (_seed, _width, _height) => {
   width = stageDim(_width)
   height = stageDim(_height)
   tiles = makeTileMap(width, height)
-  rooms = makeRooms(10000, width, height, 3.0, seed)
+  rooms = makeRooms(100, width, height, 3, seed)
+  IO.trace("ROOMS", rooms)
   return Dungeon(seed, width, height, tiles, rooms)
 }
