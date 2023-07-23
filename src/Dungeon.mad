@@ -98,7 +98,7 @@ export atIndex = (tileMap, x, y) => pipe(
 
 
 makeTileMap :: Integer -> Integer -> TileMap
-export makeTileMap = (width, height) => pipe(
+export makeTileMap = (height, width) => pipe(
   List.range(0),
   map(
     (x) => pipe(
@@ -183,27 +183,72 @@ anyAreaContainsPoint :: List Area -> Integer -> Integer -> Boolean
 anyAreaContainsPoint = (areas, x, y) => Fn.any(areaContainsPoint($, x, y))(areas)
 
 BLUE_HASH = Terminal.text.blue("#")
+GREEN_HASH = Terminal.text.green("#")
 RED_HASH = Terminal.text.red("#")
+YELLOW_HASH = Terminal.text.yellow("#")
+WHITE_HASH = Terminal.text.white("#")
 
-renderTile :: List Area -> Tile -> String
-renderTile = (rooms, tile) => where(tile) {
+isEdge :: Integer -> Integer -> Integer -> Boolean
+isEdge = (min, max, point) => point == min || point == max
+
+isBoundary :: Integer -> Integer -> Integer -> Integer -> Integer -> Integer -> Boolean
+isBoundary = (minX, minY, maxX, maxY, x, y) => isEdge(minX, maxX, x) || isEdge(minY, maxY, y)
+
+isAreaEdge :: Area -> Integer -> Integer -> Boolean
+isAreaEdge = (area, x, y) => where(area) {
+  Room(rx, ry, rw, rh) =>
+    isBoundary(rx, ry, rw, rh, x, y)
+
+  Stage(rx, ry, rw, rh) =>
+    isBoundary(rx, ry, rw, rh, x, y)
+}
+
+modEdge :: Integer -> Integer -> Integer
+modEdge = (limit, l) => Math.mod(l, limit)
+
+renderTile :: Integer -> Integer -> List Area -> Tile -> String
+renderTile = (stageWidth, stageHeight, rooms, tile) => where(tile) {
   Tile(tk, tx, ty) =>
     Fn.ifElse(
       anyAreaContainsPoint(rooms, tx),
       Fn.always(" "),
-      (_) => tk == TileWall ? tx == 0 || ty == 0 ? RED_HASH : BLUE_HASH : "#",
+      (_) => (
+        tk == TileWall && isBoundary(0, 0, stageWidth, stageHeight, tx, ty)
+          ? ty == 0
+            ? Terminal.text.green(show(modEdge(10, tx)))
+            : Terminal.text.yellow(show(modEdge(10, ty)))
+          : WHITE_HASH
+      ),
     )(ty)
 }
 
 render :: Dungeon -> String
 export render = pipe(
   where {
-    Dungeon(_, _, _, tiles, rooms) =>
-      List.reduce((agg, rows) => List.append(map(renderTile(rooms))(rows), agg), [], tiles)
+    Dungeon(_, w, h, tiles, rooms) =>
+      pipe(
+        List.reduce(
+          (agg, rows) => List.append(
+            pipe(
+              map(renderTile(w, h, rooms)),
+              String.join(""),
+            )(rows),
+            agg,
+          ),
+          [],
+        ),
+        String.join(RED_HASH ++ "\n"),
+        (r) => r
+            ++ RED_HASH
+            ++ "\n"
+            ++ pipe(
+              List.range(0),
+              map(Fn.always(RED_HASH)),
+              String.join(""),
+            )(h)
+            ++ RED_HASH,
+      )(tiles)
   },
-  map(String.join("")),
-  String.join(RED_HASH ++ "\n"),
-  (r) => r ++ RED_HASH ++ "\n",
 )
 
 createDungeon :: String -> Integer -> Integer -> Dungeon
@@ -216,7 +261,7 @@ export createDungeon = (_seed, _width, _height) => {
   )
   width = stageDim(_width)
   height = stageDim(_height)
-  tiles = makeTileMap(width, height)
+  tiles = makeTileMap(height, width)
   rooms = makeRooms(100, width, height, 3, seed)
   IO.trace("ROOMS", rooms)
   return Dungeon(seed, width, height, tiles, rooms)
