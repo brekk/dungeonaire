@@ -1,10 +1,7 @@
-import type { Maybe } from "Maybe"
-
-import type { Area, BoundingBox } from "./Area"
+import type { Area } from "./Area"
 import type { Seed } from "./LCG"
 import type { TileMap } from "./Tile"
 
-import Dictionary from "Dictionary"
 import Float from "Float"
 import Fn from "Function"
 import IO from "IO"
@@ -12,24 +9,11 @@ import Integer from "Integer"
 import Int from "Integer"
 import List from "List"
 import Math from "Math"
-import { Just, Nothing, fromMaybe, isJust } from "Maybe"
-import Number from "Number"
-import String from "String"
-import Terminal from "Terminal"
 
-import {
-  Area,
-  Box,
-  anyAreaContainsPoint,
-  anyAreaIntersectsArea,
-  areaContainsPoint,
-  areaIntersectsArea,
-  getBoundingBox,
-} from "./Area"
+import { Area, anyAreaIntersectsArea } from "./Area"
 import LCG from "./LCG"
 import { makeOdd, minimum } from "./Math"
-import { hex } from "./String"
-import { makeTileMap, renderTile } from "./Tile"
+import { makeTileMap } from "./Tile"
 
 
 
@@ -80,58 +64,12 @@ makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
 makeRooms :: Integer -> Integer -> Integer -> Integer -> Seed -> List Area
 makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
   LCG.iterate($, makeRandomRoom(stageWidth, stageHeight, pad), seed),
-  List.reduce((agg, x) => { return !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg }, []),
+  List.reduce((agg, x) => !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg, []),
 )(total)
 
-BLUE_HASH = Terminal.text.blue("#")
-GREEN_HASH = Terminal.text.green("#")
-RED_HASH = Terminal.text.red("#")
-YELLOW_HASH = Terminal.text.yellow("#")
-WHITE_HASH = Terminal.text.white("#")
-
-
-
-renderBoundary :: (String -> String) -> Integer -> String
-renderBoundary = (fn, i) => pipe(
-  hex,
-  fn,
-)(i)
-
-
-
-render :: Dungeon -> String
-export render = pipe(
-  where {
-    Dungeon(_, w, h, tiles, areas) =>
-      pipe(
-        List.reduce(
-          (agg, rows) => List.append(
-            pipe(
-              map(renderTile(w, h, areas)),
-              String.join(""),
-            )(rows),
-            agg,
-          ),
-          [],
-        ),
-        String.join(RED_HASH ++ "\n"),
-        (r) => r
-            ++ RED_HASH
-            ++ "\n"
-            ++ pipe(
-              List.range(0),
-              map(Fn.always(RED_HASH)),
-              String.join(""),
-            )(h)
-            ++ RED_HASH,
-      )(tiles)
-  },
-)
-
-createDungeon :: Integer -> Integer -> Integer -> Dungeon
-export createDungeon = (_seed, _width, _height) => {
-  IO.trace("SEED", _seed)
-  seed = LCG.mkSeed(_seed)
+createDungeon :: Seed -> Integer -> Integer -> Dungeon
+export createDungeon = (seed, _width, _height) => {
+  IO.trace("SEED", seed)
   min5 = minimum(5)
   stageDim = pipe(
     min5,
@@ -144,10 +82,3 @@ export createDungeon = (_seed, _width, _height) => {
   IO.trace("ROOMS", areas)
   return Dungeon(seed, width, height, tiles, areas)
 }
-
-createHiddenSeedDungeon :: Integer -> Integer -> Dungeon
-export createHiddenSeedDungeon = (_width, _height) => pipe(
-  LCG.mkSeedFromString,
-  LCG.toInt(0, 1000000000000),
-  createDungeon($, _width, _height),
-)("dungeonaire@0.0.1")

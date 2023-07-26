@@ -5,15 +5,17 @@ import { fromMaybe } from "Maybe"
 import String from "String"
 
 import Dungeon from "./Dungeon"
-import Vector from "./Vector"
+import LCG from "./LCG"
+import { render } from "./Render"
 
 
 
 main = () => {
   pipe(
     Date.getTimestamp,
+    LCG.mkSeed,
     Dungeon.createDungeon($, 20, 40),
-    Dungeon.render,
+    render,
     IO.put,
   )(Date.now())
 }

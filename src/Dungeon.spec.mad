@@ -1,23 +1,24 @@
-import type { Area } from "./Dungeon"
+import type { Area } from "./Area"
 
 import { assertEquals, test } from "Test"
 
-import { Room, areaIntersectsArea } from "./Dungeon"
+import { Area } from "./Area"
+import { areaIntersectsArea } from "./Area"
 
 
 
 test(
   "areaIntersectsArea - does intersect",
   () => {
-    a = Room(1.0, 1.0, 10.0, 10.0)
+    a = Area(1, 1, 10, 10)
     return assertEquals(true, areaIntersectsArea(a, a))
   },
 )
 test(
   "areaIntersectsArea - doesn't intersect",
   () => {
-    a = Room(1.0, 1.0, 10.0, 10.0)
-    b = Room(-100.0, 1.0, 10.0, 10.0)
+    a = Area(1, 1, 10, 10)
+    b = Area(-100, 1, 10, 10)
     return assertEquals(false, areaIntersectsArea(a, b))
   },
 )
