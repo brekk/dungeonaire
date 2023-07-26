@@ -1,0 +1,12 @@
+import Math from "Math"
+
+
+
+minimum :: Integer -> Integer -> Integer
+export minimum = (m, x) => x < m ? m : x
+
+isEven :: Integer -> Boolean
+export isEven = (x) => Math.mod(x, 2) == 0
+
+makeOdd :: Integer -> Integer
+export makeOdd = (x) => isEven(x) ? x + 1 : x

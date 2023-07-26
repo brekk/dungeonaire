@@ -1,0 +1,5 @@
+tap :: (a -> b) -> a -> a
+export tap = (fn, x) => {
+  fn(x)
+  return x
+}

@@ -1,5 +1,8 @@
+import Date from "Date"
 import IO from "IO"
 import Math from "Math"
+import { fromMaybe } from "Maybe"
+import String from "String"
 
 import Dungeon from "./Dungeon"
 import Vector from "./Vector"
@@ -7,9 +10,10 @@ import Vector from "./Vector"
 
 
 main = () => {
-  IO.put("0123456789")
   pipe(
+    Date.getTimestamp,
+    Dungeon.createDungeon($, 20, 40),
     Dungeon.render,
     IO.put,
-  )(Dungeon.createDungeon("swapjabble", 20, 40))
+  )(Date.now())
 }

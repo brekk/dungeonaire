@@ -1,0 +1,35 @@
+import List from "List"
+import Math from "Math"
+import { Just, Nothing } from "Maybe"
+import String from "String"
+
+import { findWithIndex } from "./List"
+
+
+
+aThroughF :: Integer -> String
+aThroughF = pipe(
+  (i) => i == 10 ? "a" : i == 11 ? "b" : i == 12 ? "c" : i == 13 ? "d" : i == 14 ? "e" : "f",
+)
+
+hex :: Integer -> String
+export hex = (i) => pipe(
+  Math.mod($, 16),
+  (x) => x > 9 ? aThroughF(x) : show(x),
+)(i)
+
+ALPHABET = pipe(
+  String.split(""),
+)("abcdefghijklmnopqrtuvwxyz")
+
+alpha :: Integer -> String
+export alpha = (idx) => pipe(
+  findWithIndex((_, i) => i == Math.mod(idx, List.length(ALPHABET))),
+  where {
+    Just(#[i, x]) =>
+      x
+
+    Nothing =>
+      "?"
+  },
+)(ALPHABET)

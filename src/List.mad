@@ -1,7 +1,7 @@
 import type { Maybe } from "Maybe"
 
 import List from "List"
-import { Just, Nothing } from "Maybe"
+import { Just, Nothing, isJust } from "Maybe"
 
 
 
@@ -28,3 +28,17 @@ export setMaybe = (n, mV, list) => where(mV) {
   Nothing =>
     list
 }
+
+findWithIndex :: (a -> Integer -> Boolean) -> List a -> Maybe #[Integer, a]
+export findWithIndex = (fn, _list) => pipe(
+  List.reduce(
+    (agg, a) => isJust(agg.result)
+      ? agg
+      : {
+        count: agg.count + 1,
+        result: fn(a, agg.count + 1) ? Just(#[agg.count + 1, a]) : Nothing,
+      },
+    { count: 0, result: Nothing },
+  ),
+  .result,
+)(_list)

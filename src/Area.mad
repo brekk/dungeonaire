@@ -1,0 +1,50 @@
+import Fn from "Function"
+import {} from "List"
+
+
+
+// x y width height
+export type Area = Area(Integer, Integer, Integer, Integer)
+
+// top right bottom left
+export type BoundingBox = Box(Integer, Integer, Integer, Integer)
+
+
+getBoundingBox :: Area -> BoundingBox
+export getBoundingBox = (area) => where(area) {
+  Area(x, y, w, h) =>
+    Box(y, x + w, y + h, x)
+}
+
+areaContainsPoint :: Area -> Integer -> Integer -> Boolean
+export areaContainsPoint = (area, x, y) => pipe(
+  getBoundingBox,
+  where {
+    Box(t, r, b, l) =>
+      !(x < l || x > r || y < t || y > b)
+  },
+)(area)
+
+areaIntersectsArea :: Area -> Area -> Boolean
+export areaIntersectsArea = (j, k) => pipe(
+  map(getBoundingBox),
+  where {
+    [Box(t, r, b, l), Box(t2, r2, b2, l2)] =>
+      !(l2 > r || r2 < l || t2 > b || b2 < t)
+
+    _ =>
+      false
+  },
+)([j, k])
+
+anyAreaIntersectsArea :: List Area -> Area -> Boolean
+export anyAreaIntersectsArea = (areas, r) => Fn.any((area) => areaIntersectsArea(area, r), areas)
+
+anyAreaContainsPoint :: List Area -> Integer -> Integer -> Boolean
+export anyAreaContainsPoint = (areas, x, y) => Fn.any(areaContainsPoint($, x, y))(areas)
+
+isEdge :: Integer -> Integer -> Integer -> Boolean
+export isEdge = (min, max, point) => point == min || point == max
+
+isBoundary :: Integer -> Integer -> Integer -> Integer -> Integer -> Integer -> Boolean
+export isBoundary = (minX, minY, maxX, maxY, x, y) => isEdge(minX, maxX, x) || isEdge(minY, maxY, y)

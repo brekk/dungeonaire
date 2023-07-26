@@ -1,135 +1,42 @@
 import type { Maybe } from "Maybe"
 
+import type { Area, BoundingBox } from "./Area"
 import type { Seed } from "./LCG"
+import type { TileMap } from "./Tile"
 
+import Dictionary from "Dictionary"
 import Float from "Float"
 import Fn from "Function"
 import IO from "IO"
+import Integer from "Integer"
 import Int from "Integer"
 import List from "List"
 import Math from "Math"
-import { Just, Nothing } from "Maybe"
+import { Just, Nothing, fromMaybe, isJust } from "Maybe"
 import Number from "Number"
 import String from "String"
 import Terminal from "Terminal"
 
-import LCG from "./LCG"
-
-
-
-export type TileType = TileWall | TileFloor | TileDoor | TileHazard | TileVoid
-
-// type x y
-export type Tile = Tile(TileType, Integer, Integer)
-
-// x y width height
-export type Area
-  = Room(Integer, Integer, Integer, Integer)
-  | Stage(Integer, Integer, Integer, Integer)
-
-// top right bottom left
-export type BoundingBox = Box(Integer, Integer, Integer, Integer)
-
-getBoundingBox :: Area -> BoundingBox
-export getBoundingBox = (room) => where(room) {
-  Room(x, y, w, h) =>
-    Box(y, x + w, y + h, x)
-
-  Stage(x, y, w, h) =>
-    Box(y, x + w, y + h, x)
-}
-
-areaContainsPoint :: Area -> Integer -> Integer -> Boolean
-export areaContainsPoint = (room, x, y) => pipe(
+import {
+  Area,
+  Box,
+  anyAreaContainsPoint,
+  anyAreaIntersectsArea,
+  areaContainsPoint,
+  areaIntersectsArea,
   getBoundingBox,
-  where {
-    Box(t, r, b, l) =>
-      !(x < l || x > r || y < t || y > b)
-  },
-)(room)
-
-areaIntersectsArea :: Area -> Area -> Boolean
-export areaIntersectsArea = (j, k) => pipe(
-  map(getBoundingBox),
-  where {
-    [Box(t, r, b, l), Box(t2, r2, b2, l2)] =>
-      !(l2 > r || r2 < l || t2 > b || b2 < t)
-
-    _ =>
-      false
-  },
-)([j, k])
-
-alias TileMap = List (List Tile)
-
-type Dungeon = Dungeon(Seed, Integer, Integer, TileMap, List Area)
-
-minimum :: Integer -> Integer -> Integer
-minimum = (m, x) => x < m ? m : x
-
-isEven :: Integer -> Boolean
-export isEven = (x) => Math.mod(x, 2) == 0
-
-makeOdd :: Integer -> Integer
-export makeOdd = (x) => isEven(x) ? x + 1 : x
-
-export alias Neighbors = {
-  e :: Maybe Tile,
-  n :: Maybe Tile,
-  ne :: Maybe Tile,
-  nw :: Maybe Tile,
-  s :: Maybe Tile,
-  se :: Maybe Tile,
-  sw :: Maybe Tile,
-  w :: Maybe Tile,
-}
-
-atIndex :: TileMap -> Integer -> Integer -> Maybe Tile
-export atIndex = (tileMap, x, y) => pipe(
-  List.nth(x),
-  where {
-    Just(xs) =>
-      List.nth(y, xs)
-
-    Nothing =>
-      Nothing
-  },
-)(tileMap)
+} from "./Area"
+import LCG from "./LCG"
+import { makeOdd, minimum } from "./Math"
+import { hex } from "./String"
+import { makeTileMap, renderTile } from "./Tile"
 
 
-makeTileMap :: Integer -> Integer -> TileMap
-export makeTileMap = (height, width) => pipe(
-  List.range(0),
-  map(
-    (x) => pipe(
-      List.range(0),
-      map((y) => Tile(TileWall, x, y)),
-    )(height),
-  ),
-)(width)
 
-getNeighbors :: TileMap -> Integer -> Integer -> Neighbors
-getNeighbors = (tiles, x, y) => {
-  at = atIndex(tiles)
-  return {
-    e: at(x + 1, y),
-    n: at(x, y - 1),
-    ne: at(x + 1, y - 1),
-    nw: at(x - 1, y - 1),
-    s: at(x, y + 1),
-    se: at(x + 1, y + 1),
-    sw: at(x - 1, y + 1),
-    w: at(x - 1, y),
-  }
-}
-
-getDimension :: Boolean -> Integer -> Integer -> Integer
-export getDimension = (isHotdog, extra, x) => isHotdog ? x + extra : x
+export type Dungeon = Dungeon(Seed, Integer, Integer, TileMap, List Area)
 
 boundByStageWithDefault :: Integer -> Integer -> Integer -> Integer
-export boundByStageWithDefault = (edge, minima, dimension) => minimum(minima, dimension - edge)
-
-
+export boundByStageWithDefault = (edge, minima, dimension) => Math.min(minima, dimension - edge)
 
 boundByStage :: Integer -> Integer -> Integer
 export boundByStage = boundByStageWithDefault(4)
@@ -146,7 +53,7 @@ randomPoint = (max, size, seed) => pipe(
 calcRoomSize :: Integer -> Integer -> Integer -> Integer -> Seed -> Integer
 calcRoomSize = (size, rectangularity, maximum, edgeDistance, seed) => Float.toInteger(
   Math.round(
-    LCG.toFloat(seed) * Int.toFloat(minimum(maximum - edgeDistance, size + rectangularity)),
+    LCG.toFloat(seed) * Int.toFloat(Math.min(maximum - edgeDistance, size + rectangularity)),
   )
     + 1,
 )
@@ -165,13 +72,10 @@ makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
   seed6 = LCG.stepN(5, seed)
   x = randomPoint(stageWidth, width, seed6)
   seed7 = LCG.stepN(6, seed)
-  y = randomPoint(stageHeight, width, seed7)
-  room = Room(x, y, width, height)
-  return room
+  y = randomPoint(stageHeight, height, seed7)
+  area = Area(x, y, width, height)
+  return area
 }
-
-anyAreaIntersectsArea :: List Area -> Area -> Boolean
-export anyAreaIntersectsArea = (rooms, r) => Fn.any((room) => areaIntersectsArea(room, r), rooms)
 
 makeRooms :: Integer -> Integer -> Integer -> Integer -> Seed -> List Area
 makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
@@ -179,58 +83,31 @@ makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
   List.reduce((agg, x) => { return !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg }, []),
 )(total)
 
-anyAreaContainsPoint :: List Area -> Integer -> Integer -> Boolean
-anyAreaContainsPoint = (areas, x, y) => Fn.any(areaContainsPoint($, x, y))(areas)
-
 BLUE_HASH = Terminal.text.blue("#")
 GREEN_HASH = Terminal.text.green("#")
 RED_HASH = Terminal.text.red("#")
 YELLOW_HASH = Terminal.text.yellow("#")
 WHITE_HASH = Terminal.text.white("#")
 
-isEdge :: Integer -> Integer -> Integer -> Boolean
-isEdge = (min, max, point) => point == min || point == max
 
-isBoundary :: Integer -> Integer -> Integer -> Integer -> Integer -> Integer -> Boolean
-isBoundary = (minX, minY, maxX, maxY, x, y) => isEdge(minX, maxX, x) || isEdge(minY, maxY, y)
 
-isAreaEdge :: Area -> Integer -> Integer -> Boolean
-isAreaEdge = (area, x, y) => where(area) {
-  Room(rx, ry, rw, rh) =>
-    isBoundary(rx, ry, rw, rh, x, y)
+renderBoundary :: (String -> String) -> Integer -> String
+renderBoundary = (fn, i) => pipe(
+  hex,
+  fn,
+)(i)
 
-  Stage(rx, ry, rw, rh) =>
-    isBoundary(rx, ry, rw, rh, x, y)
-}
 
-modEdge :: Integer -> Integer -> Integer
-modEdge = (limit, l) => Math.mod(l, limit)
-
-renderTile :: Integer -> Integer -> List Area -> Tile -> String
-renderTile = (stageWidth, stageHeight, rooms, tile) => where(tile) {
-  Tile(tk, tx, ty) =>
-    Fn.ifElse(
-      anyAreaContainsPoint(rooms, tx),
-      Fn.always(" "),
-      (_) => (
-        tk == TileWall && isBoundary(0, 0, stageWidth, stageHeight, tx, ty)
-          ? ty == 0
-            ? Terminal.text.green(show(modEdge(10, tx)))
-            : Terminal.text.yellow(show(modEdge(10, ty)))
-          : WHITE_HASH
-      ),
-    )(ty)
-}
 
 render :: Dungeon -> String
 export render = pipe(
   where {
-    Dungeon(_, w, h, tiles, rooms) =>
+    Dungeon(_, w, h, tiles, areas) =>
       pipe(
         List.reduce(
           (agg, rows) => List.append(
             pipe(
-              map(renderTile(w, h, rooms)),
+              map(renderTile(w, h, areas)),
               String.join(""),
             )(rows),
             agg,
@@ -251,9 +128,10 @@ export render = pipe(
   },
 )
 
-createDungeon :: String -> Integer -> Integer -> Dungeon
+createDungeon :: Integer -> Integer -> Integer -> Dungeon
 export createDungeon = (_seed, _width, _height) => {
-  seed = LCG.mkSeedFromString(_seed)
+  IO.trace("SEED", _seed)
+  seed = LCG.mkSeed(_seed)
   min5 = minimum(5)
   stageDim = pipe(
     min5,
@@ -262,7 +140,14 @@ export createDungeon = (_seed, _width, _height) => {
   width = stageDim(_width)
   height = stageDim(_height)
   tiles = makeTileMap(height, width)
-  rooms = makeRooms(100, width, height, 3, seed)
-  IO.trace("ROOMS", rooms)
-  return Dungeon(seed, width, height, tiles, rooms)
+  areas = makeRooms(100, width, height, 3, seed)
+  IO.trace("ROOMS", areas)
+  return Dungeon(seed, width, height, tiles, areas)
 }
+
+createHiddenSeedDungeon :: Integer -> Integer -> Dungeon
+export createHiddenSeedDungeon = (_width, _height) => pipe(
+  LCG.mkSeedFromString,
+  LCG.toInt(0, 1000000000000),
+  createDungeon($, _width, _height),
+)("dungeonaire@0.0.1")
