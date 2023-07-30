@@ -84,33 +84,34 @@ stageDimension = pipe(
   makeOdd,
 )
 
-growMazeAtPoint = (roomCheck, tilemap, x, y) => {
-  prev = Vector(x, y)
-  cells = [prev]
-  getCardinal = getPossibleCardinalPaths(tilemap)
-  // init, pred, transformer -- ends when false
-  if (roomCheck(x, y)) { tilemap } else {
-    Ctrl.loop(
-      { count: 0, prev, toRemove: [] },
-      (x) => x.count < 500,
-      (x) => {
-        pipe(
-          where {
-            Just(Tile(tk, tx, ty)) =>
-              pipe(
-                getCardinal(tx),
-              )(ty)
+// canCarve :: Integer -> Tile -> Vector -> Boolean
 
-            Nothing =>
-              []
-          },
-        )(cell)
-        cell = x.prev
-        adjacentCells = getCardinal
-      },
-    )
-  }
-}
+// growMazeAtPoint = (roomCheck, tilemap, x, y) => {
+//   prevVector = Vector(x, y)
+//   cells = [prevVector]
+//   // init, pred, transformer -- ends when false
+//   if (roomCheck(x, y)) { tilemap } else {
+//     Ctrl.loop(
+//       { count: 0, prevVector, toRemove: [] },
+//       (x) => x.count < 500,
+//       (x) => {
+//         pipe(
+//           where {
+//             Just(Tile(tk, tx, ty)) =>
+//               pipe(
+//                 // getPossibleCardinalPaths(tilemap, tx),
+
+
+//               )(ty)
+
+//             Nothing =>
+//               []
+//           },
+//         )()
+//       },
+//     )
+//   }
+// }
 
 createDungeon :: Seed -> Integer -> Integer -> Dungeon
 export createDungeon = (seed, _width, _height) => {

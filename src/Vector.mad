@@ -128,6 +128,33 @@ export limit = (max, factor, vec) => transform(
 unfloat :: Vector -> Vector
 export unfloat = transform((x, y) => Vector(Math.round(x), Math.round(y)))
 
+mixX :: Float -> Vector -> Vector -> Vector
+export mixX = (s, v1, v2) => combineVectors(
+  (x, y, x2, _) => Vector((1 - s) * x + s * x2, y),
+  v1,
+  v2,
+)
+
+mixY :: Float -> Vector -> Vector -> Vector
+export mixY = (s, v1, v2) => combineVectors(
+  (x, y, _, y2) => Vector(x, (1 - s) * y + s * y2),
+  v1,
+  v2,
+)
+
+mix :: Float -> Vector -> Vector -> Vector
+export mix = (s, v1, v2) => combineVectors(
+  (x, y, x2, y2) => Vector((1 - s) * x + s * x2, (1 - s) * y + s * y2),
+  v1,
+  v2,
+)
+
+zero :: Vector -> Vector
+zero = transform((_, _) => Vector(0, 0))
+
+isZero :: Vector -> Boolean
+isZero = transform((x, y) => x == 0 && y == 0)
+
 horizontalAngle :: Vector -> Float
 export horizontalAngle = transform((x, y) => atan2(y, x))
 
@@ -144,3 +171,86 @@ export verticalDegree = pipe(
   verticalAngle,
   rad2deg,
 )
+
+dot :: Vector -> Vector -> Float
+export dot = combineVectors((x, y, x2, y2) => x * x2 + y * y2)
+
+cross :: Vector -> Vector -> Float
+export cross = combineVectors((x, y, x2, y2) => (x * y2) - (y * x2))
+
+projectOnto :: Vector -> Vector -> Vector
+export projectOnto = combineVectors(
+  (x, y, x2, y2) => {
+    num = (x * x2) + (y * y2)
+    denom = (x2 * x2) + (y2 * y2)
+    coeff = num / denom
+    return Vector(x2 * coeff, y2 * coeff)
+  },
+)
+
+cos :: Number a => a -> a
+cos = (x) => #- Math.cos(x) -#
+
+sin :: Number a => a -> a
+sin = (x) => #- Math.sin(x) -#
+
+rotate :: Float -> Vector -> Vector
+export rotate = (d, vec) => transform(
+  (x, y) => {
+    dCos = cos(d)
+    dSin = sin(d)
+    return Vector((x * dCos) - (y * dSin), (x * dSin) + (y * dCos))
+  },
+  vec,
+)
+
+rotateDeg :: Float -> Vector -> Vector
+export rotateDeg = (deg, vec) => rotate(deg2rad(deg), vec)
+
+rotateTo :: Float -> Vector -> Vector
+export rotateTo = (rot, vec) => pipe(
+  horizontalAngle,
+  (h) => rotate(rot - h, vec),
+)(vec)
+
+rotateToDeg :: Float -> Vector -> Vector
+export rotateToDeg = (rot, vec) => pipe(
+  deg2rad,
+  rotate($, vec),
+)(rot)
+
+rotateBy :: Float -> Vector -> Vector
+export rotateBy = (rot, vec) => pipe(
+  horizontalAngle,
+  (h) => rotate(h + rot, vec),
+)(vec)
+
+rotateByDeg :: Float -> Vector -> Vector
+export rotateByDeg = (r, vec) => pipe(
+  deg2rad,
+  rotateBy($, vec),
+)(r)
+
+distanceX :: Vector -> Vector -> Float
+distanceX = combineVectors((x, _, x2, _) => x - x2)
+
+distanceY :: Vector -> Vector -> Float
+distanceY = combineVectors((_, y, _, y2) => y - y2)
+
+squareDistance :: Vector -> Vector -> Float
+squareDistance = combineVectors(
+  (x, y, x2, y2) => {
+    dx = x - x2
+    dy = y - y2
+    return dx * dx + dy * dy
+  },
+)
+
+distance :: Vector -> Vector -> Float
+export distance = (v1, v2) => pipe(
+  squareDistance(v1),
+  Math.sqrt,
+)(v2)
+
+equals :: Vector -> Vector -> Boolean
+export equals = combineVectors((x, y, x2, y2) => x == x2 && y == y2)
