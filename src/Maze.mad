@@ -1,0 +1,30 @@
+import type { Seed } from "./LCG"
+import type { TileMap } from "./Tile"
+
+import IO from "IO"
+import List from "List"
+
+import { Tile, TileWall } from "./Tile"
+
+
+
+// growMazeStep :: Integer -> Integer 
+
+growMaze :: TileMap -> Seed -> Integer -> Integer -> TileMap
+export growMaze = (tilemap, seed, x, y) => pipe(
+  List.reduce(
+    (agg, tileRow) => List.append(
+      map(
+        where {
+          Tile(tk, tx, ty) =>
+            pipe(
+              Tile(TileWall, x),
+            )(y)
+        },
+        tileRow,
+      ),
+      agg,
+    ),
+    [],
+  ),
+)(tilemap)

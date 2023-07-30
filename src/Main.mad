@@ -6,6 +6,7 @@ import String from "String"
 
 import Dungeon from "./Dungeon"
 import LCG from "./LCG"
+import Maze from "./Maze"
 import { render } from "./Render"
 
 

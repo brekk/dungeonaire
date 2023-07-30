@@ -2,6 +2,7 @@ import type { Area } from "./Area"
 import type { Seed } from "./LCG"
 import type { TileMap } from "./Tile"
 
+import Ctrl from "Control"
 import Float from "Float"
 import Fn from "Function"
 import IO from "IO"
@@ -9,11 +10,21 @@ import Integer from "Integer"
 import Int from "Integer"
 import List from "List"
 import Math from "Math"
+import { Just, Nothing } from "Maybe"
 
-import { Area, anyAreaIntersectsArea } from "./Area"
+import { Area, anyAreaContainsPoint, anyAreaIntersectsArea } from "./Area"
 import LCG from "./LCG"
 import { makeOdd, minimum } from "./Math"
-import { makeTileMap } from "./Tile"
+import {
+  Tile,
+  TileFloor,
+  TileWall,
+  atIndex,
+  getPossibleCardinalPaths,
+  makeTileMap,
+  walkTileMap,
+} from "./Tile"
+import { Vector } from "./Vector"
 
 
 
@@ -67,18 +78,52 @@ makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
   List.reduce((agg, x) => !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg, []),
 )(total)
 
+stageDimension :: Integer -> Integer
+stageDimension = pipe(
+  minimum(5),
+  makeOdd,
+)
+
+growMazeAtPoint = (roomCheck, tilemap, x, y) => {
+  prev = Vector(x, y)
+  cells = [prev]
+  getCardinal = getPossibleCardinalPaths(tilemap)
+  // init, pred, transformer -- ends when false
+  if (roomCheck(x, y)) { tilemap } else {
+    Ctrl.loop(
+      { count: 0, prev, toRemove: [] },
+      (x) => x.count < 500,
+      (x) => {
+        pipe(
+          where {
+            Just(Tile(tk, tx, ty)) =>
+              pipe(
+                getCardinal(tx),
+              )(ty)
+
+            Nothing =>
+              []
+          },
+        )(cell)
+        cell = x.prev
+        adjacentCells = getCardinal
+      },
+    )
+  }
+}
+
 createDungeon :: Seed -> Integer -> Integer -> Dungeon
 export createDungeon = (seed, _width, _height) => {
   IO.trace("SEED", seed)
-  min5 = minimum(5)
-  stageDim = pipe(
-    min5,
-    makeOdd,
-  )
-  width = stageDim(_width)
-  height = stageDim(_height)
-  tiles = makeTileMap(height, width)
-  areas = makeRooms(100, width, height, 3, seed)
-  IO.trace("ROOMS", areas)
-  return Dungeon(seed, width, height, tiles, areas)
+  width = stageDimension(_width)
+  height = stageDimension(_height)
+  _areas = makeRooms(100, width, height, 3, seed)
+  IO.trace("ROOMS", _areas)
+  _tiles = makeTileMap(height, width)
+  getTile = atIndex(_tiles)
+  inRoom = anyAreaContainsPoint(_areas)
+  tiles = pipe(
+    walkTileMap(where { Tile(_, tx, ty) => Tile(inRoom(tx, ty) ? TileFloor : TileWall, tx, ty) }),
+  )(_tiles)
+  return Dungeon(seed, width, height, tiles, _areas)
 }

@@ -10,7 +10,7 @@ import Terminal from "Terminal"
 import { Area, anyAreaContainsPoint, isBoundary } from "./Area"
 import { Dungeon } from "./Dungeon"
 import { hex } from "./String"
-import { Tile, TileWall } from "./Tile"
+import { Tile, TileFloor, TileWall, walkTileMap } from "./Tile"
 
 
 
@@ -26,20 +26,18 @@ export renderBoundary = (fn, i) => pipe(
   fn,
 )(i)
 
-renderTile :: Integer -> Integer -> List Area -> Tile -> String
-export renderTile = (stageWidth, stageHeight, areas, tile) => where(tile) {
+renderTile :: Integer -> Integer -> Tile -> String
+export renderTile = (stageWidth, stageHeight, tile) => where(tile) {
   Tile(tk, tx, ty) =>
-    Fn.ifElse(
-      anyAreaContainsPoint(areas, tx),
-      Fn.always(" "),
-      (_) => (
-        tk == TileWall && isBoundary(0, 0, stageWidth, stageHeight, tx, ty)
+    (
+      tk == TileFloor
+        ? " "
+        : tk == TileWall && isBoundary(0, 0, stageWidth, stageHeight, tx, ty)
           ? ty == 0
             ? renderBoundary(Terminal.text.green, tx)
             : renderBoundary(Terminal.text.yellow, ty)
           : "#"
-      ),
-    )(ty)
+    )
 }
 
 renderFinalLine :: Integer -> String -> String
@@ -53,25 +51,18 @@ renderFinalLine = (h, r) => r
     )(h)
     ++ RED_HASH
 
-renderRooms :: Integer -> Integer -> List Area -> TileMap -> List String
-renderRooms = (w, h, areas, tiles) => List.reduce(
-  (agg, rows) => List.append(
-    pipe(
-      map(renderTile(w, h, areas)),
-      String.join(""),
-    )(rows),
-    agg,
-  ),
-  [],
-  tiles,
-)
+renderRooms :: Integer -> Integer -> TileMap -> List String
+renderRooms = (w, h, tiles) => pipe(
+  walkTileMap(renderTile(w, h)),
+  map(String.join("")),
+)(tiles)
 
 render :: Dungeon -> String
 export render = pipe(
   where {
     Dungeon(_, w, h, tiles, areas) =>
       pipe(
-        renderRooms(w, h, areas),
+        renderRooms(w, h),
         String.join(RED_HASH ++ "\n"),
         renderFinalLine(h),
       )(tiles)

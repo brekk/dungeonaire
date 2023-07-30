@@ -1,7 +1,7 @@
 import type { Maybe } from "Maybe"
 
 import List from "List"
-import { Just, Nothing } from "Maybe"
+import { Just, Nothing, isJust } from "Maybe"
 
 
 
@@ -11,7 +11,6 @@ export type TileType = TileWall | TileFloor | TileDoor | TileHazard | TileVoid
 export type Tile = Tile(TileType, Integer, Integer)
 
 export alias TileMap = List (List Tile)
-
 
 export alias Neighbors = {
   e :: Maybe Tile,
@@ -23,6 +22,20 @@ export alias Neighbors = {
   sw :: Maybe Tile,
   w :: Maybe Tile,
 }
+
+export alias CardinalNeighbors = {
+  e :: Maybe Tile,
+  n :: Maybe Tile,
+  s :: Maybe Tile,
+  w :: Maybe Tile,
+}
+
+walkTileMap :: (Tile -> a) -> TileMap -> List (List a)
+export walkTileMap = (fn, tiles) => List.reduce(
+  (agg, rows) => List.append(map(fn, rows), agg),
+  [],
+  tiles,
+)
 
 atIndex :: TileMap -> Integer -> Integer -> Maybe Tile
 export atIndex = (tileMap, x, y) => pipe(
@@ -61,3 +74,16 @@ export getNeighbors = (tiles, x, y) => {
     w: at(x - 1, y),
   }
 }
+
+getCardinalNeighbors :: TileMap -> Integer -> Integer -> CardinalNeighbors
+export getCardinalNeighbors = (tiles, x, y) => {
+  at = atIndex(tiles)
+  return { e: at(x + 1, y), n: at(x, y - 1), s: at(x, y + 1), w: at(x - 1, y) }
+}
+
+getPossibleCardinalPaths :: TileMap -> Integer -> Integer -> List (Maybe Tile)
+export getPossibleCardinalPaths = (tiles, x, y) => pipe(
+  getCardinalNeighbors(tiles, x),
+  (c) => [c.e, c.n, c.s, c.w],
+  List.filter(isJust),
+)(y)

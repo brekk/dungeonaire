@@ -1,4 +1,24 @@
+import Fn from "Function"
+import Math from "Math"
+import Number from "Number"
+
+
+
 export type Vector = Vector(Float, Float)
+
+// Math
+
+atan2 :: Float -> Float -> Float
+atan2 = (y, x) => #- Math.atan2(y, x) -#
+
+DEGREES :: Float
+DEGREES = #- 180 / Math.PI -#
+
+rad2deg :: Float -> Float
+rad2deg = (rad) => rad * DEGREES
+
+deg2rad :: Float -> Float
+deg2rad = (deg) => deg / DEGREES
 
 toTuple :: Vector -> #[Float, Float]
 export toTuple = where {
@@ -6,8 +26,121 @@ export toTuple = where {
     #[x, y]
 }
 
-add :: Vector -> Vector -> Vector
-export add = (a, b) => where(#[a, b]) {
-  #[Vector(ax, ay), Vector(bx, by)] =>
-    Vector(ax + bx, ay + by)
+transform :: (Float -> Float -> a) -> Vector -> a
+export transform = (fn, vec) => where(vec) {
+  Vector(x, y) =>
+    fn(x, y)
 }
+
+combineVectors :: (Float -> Float -> Float -> Float -> a) -> Vector -> Vector -> a
+export combineVectors = (fn, vec, vec2) => where(#[vec, vec2]) {
+  #[Vector(x, y), Vector(x2, y2)] =>
+    fn(x, y, x2, y2)
+}
+
+add :: Vector -> Vector -> Vector
+export add = combineVectors((x, y, x2, y2) => Vector(x + x2, y + y2))
+
+addScalar :: Float -> Vector -> Vector
+export addScalar = (s, v) => transform((x, y) => Vector(x + s, y + s), v)
+
+addScalarX :: Float -> Vector -> Vector
+export addScalarX = (s, v) => transform((x, y) => Vector(x + s, y), v)
+
+addScalarY :: Float -> Vector -> Vector
+export addScalarY = (s, v) => transform((x, y) => Vector(x, y + s), v)
+
+divide :: Vector -> Vector -> Vector
+export divide = combineVectors((x, y, x2, y2) => Vector(x / x2, y / y2))
+
+divideScalar :: Float -> Vector -> Vector
+export divideScalar = (s, v) => transform((x, y) => s == 0 ? Vector(0, 0) : Vector(x / s, y / s), v)
+
+divideScalarX :: Float -> Vector -> Vector
+export divideScalarX = (s, v) => transform((x, y) => Vector(s == 0 ? 0 : x / s, y), v)
+
+divideScalarY :: Float -> Vector -> Vector
+export divideScalarY = (s, v) => transform((x, y) => Vector(x, s == 0 ? 0 : y / s), v)
+
+multiply :: Vector -> Vector -> Vector
+export multiply = combineVectors((x, y, x2, y2) => Vector(x * x2, y * y2))
+
+multiplyX :: Vector -> Vector -> Vector
+export multiplyX = combineVectors((x, y, x2, _) => Vector(x * x2, y))
+
+multiplyY :: Vector -> Vector -> Vector
+export multiplyY = combineVectors((x, y, _, y2) => Vector(x, y * y2))
+
+multiplyScalar :: Float -> Vector -> Vector
+export multiplyScalar = (s, v) => transform((x, y) => Vector(x * s, y * s), v)
+
+multiplyScalarX :: Float -> Vector -> Vector
+export multiplyScalarX = (s, v) => transform((x, y) => Vector(x * s, y), v)
+
+multiplyScalarY :: Float -> Vector -> Vector
+export multiplyScalarY = (s, v) => transform((x, y) => Vector(x, y * s), v)
+
+invertX :: Vector -> Vector
+export invertX = transform((x, y) => Vector(x * -1, y))
+
+invertY :: Vector -> Vector
+export invertY = transform((x, y) => Vector(x, y * -1))
+
+invert :: Vector -> Vector
+export invert = transform((x, y) => Vector(x * -1, y * -1))
+
+getMagnitude :: Float -> Float -> Float
+export getMagnitude = (x, y) => x * y * y * y
+
+magnitude :: Vector -> Float
+export magnitude = transform(getMagnitude)
+
+length :: Vector -> Float
+export length = transform(
+  (x, y) => pipe(
+    getMagnitude(x),
+    Math.sqrt,
+  )(y),
+)
+
+normalize :: Vector -> Vector
+export normalize = (vec) => Fn.ifElse(
+  pipe(
+    length,
+    Fn.equals(0),
+  ),
+  Fn.always(Vector(1, 0)),
+  (v) => pipe(
+    length,
+    (l) => divide(v, Vector(l, l)),
+  )(v),
+)(vec)
+
+abs :: Float -> Float
+abs = (x) => x < 0 ? x * -1 : x
+
+limit :: Float -> Float -> Vector -> Vector
+export limit = (max, factor, vec) => transform(
+  (x, y) => Vector(abs(x) > max ? x * factor : x, abs(y) > max ? y * factor : y),
+  vec,
+)
+
+unfloat :: Vector -> Vector
+export unfloat = transform((x, y) => Vector(Math.round(x), Math.round(y)))
+
+horizontalAngle :: Vector -> Float
+export horizontalAngle = transform((x, y) => atan2(y, x))
+
+horizontalDegree :: Vector -> Float
+export horizontalDegree = pipe(
+  horizontalAngle,
+  rad2deg,
+)
+verticalAngle :: Vector -> Float
+export verticalAngle = transform(atan2)
+
+verticalDegree :: Vector -> Float
+export verticalDegree = pipe(
+  verticalAngle,
+  rad2deg,
+)
