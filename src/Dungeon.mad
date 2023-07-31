@@ -1,7 +1,9 @@
 import type { Area } from "./Area"
 import type { Seed } from "./LCG"
 import type { TileMap } from "./Tile"
+import type { Vector } from "./Vector"
 
+import Compare from "Compare"
 import Ctrl from "Control"
 import Float from "Float"
 import Fn from "Function"
@@ -10,7 +12,7 @@ import Integer from "Integer"
 import Int from "Integer"
 import List from "List"
 import Math from "Math"
-import { Just, Nothing } from "Maybe"
+import { Just, Nothing, fromMaybe } from "Maybe"
 
 import { Area, anyAreaContainsPoint, anyAreaIntersectsArea } from "./Area"
 import LCG from "./LCG"
@@ -24,9 +26,21 @@ import {
   makeTileMap,
   walkTileMap,
 } from "./Tile"
-import { Vector } from "./Vector"
+import Vx from "./Vector"
 
 
+
+NORTH :: Vector
+export NORTH = Vx.Vector(0, 1)
+
+SOUTH :: Vector
+export SOUTH = Vx.Vector(0, -1)
+
+EAST :: Vector
+export EAST = Vx.Vector(1, 0)
+
+WEST :: Vector
+export WEST = Vx.Vector(-1, 0)
 
 export type Dungeon = Dungeon(Seed, Integer, Integer, TileMap, List Area)
 
@@ -84,34 +98,82 @@ stageDimension = pipe(
   makeOdd,
 )
 
-// canCarve :: Integer -> Tile -> Vector -> Boolean
+threeSteps :: Vector -> Vector -> Vector
+threeSteps = (dir, vec) => pipe(
+  Vx.add(dir),
+  Vx.add(dir),
+  Vx.add(dir),
+)(vec)
 
-// growMazeAtPoint = (roomCheck, tilemap, x, y) => {
-//   prevVector = Vector(x, y)
-//   cells = [prevVector]
-//   // init, pred, transformer -- ends when false
-//   if (roomCheck(x, y)) { tilemap } else {
-//     Ctrl.loop(
-//       { count: 0, prevVector, toRemove: [] },
-//       (x) => x.count < 500,
-//       (x) => {
-//         pipe(
-//           where {
-//             Just(Tile(tk, tx, ty)) =>
-//               pipe(
-//                 // getPossibleCardinalPaths(tilemap, tx),
+canCarveFromTilesInDirection :: TileMap -> Vector -> Vector -> Boolean
+export canCarveFromTilesInDirection = (tilemap, dir, vec) => pipe(
+  threeSteps(dir),
+  where {
+    Vx.Vector(x, y) =>
+      pipe(
+        atIndex(tilemap, Float.toInteger(x)),
+        where {
+          Just(Tile(tk, tx, ty)) =>
+            tk != TileWall
 
+          Nothing =>
+            false
+        },
+      )(Float.toInteger(y))
+  },
+)(vec)
 
-//               )(ty)
+alias CardinalMovements = List #[Vector, Boolean]
 
-//             Nothing =>
-//               []
-//           },
-//         )()
-//       },
-//     )
-//   }
-// }
+canCarveCardinally :: TileMap -> Vector -> CardinalMovements
+canCarveCardinally = (tilemap, vec) => {
+  canCarve = canCarveFromTilesInDirection(tilemap, $, vec)
+  return [
+    #[EAST, canCarve(EAST)],
+    #[NORTH, canCarve(NORTH)],
+    #[SOUTH, canCarve(SOUTH)],
+    #[WEST, canCarve(WEST)],
+  ]
+}
+
+cardinalPossibilities :: TileMap -> Vector -> List Vector
+cardinalPossibilities = (tilemap, vec) => pipe(
+  canCarveCardinally(tilemap),
+  List.filter(where { #[dir, can] => can }),
+  map(where { #[dir, can] => dir }),
+)(vec)
+
+growMazeAtPoint = (roomCheck, tilemap, x, y) => {
+  isFloor = roomCheck(x, y)
+  prevVector = Vx.Vector(x, y)
+  cells = [prevVector]
+
+  iterations = List.reduce(
+    (state, step) => {
+      cards = pipe(
+        canCarveCardinally(tilemap),
+      )(state.prevVector)
+
+      toRemove = []
+
+      return { count: state.count + 1, prevVector, toRemove, cells }
+    },
+    { count: 0, prevVector, toRemove: [], cells },
+  )
+  // init, pred, transformer -- ends when false
+  if (isFloor) { tilemap } else { tilemap }
+}
+
+mapSize :: TileMap -> Integer
+mapSize = (tilemap) => pipe(
+  List.length,
+  (x) => pipe(
+    List.nth(0),
+    map(List.length),
+    fromMaybe(0),
+    (y) => x * y,
+  )(tilemap),
+)(tilemap)
 
 createDungeon :: Seed -> Integer -> Integer -> Dungeon
 export createDungeon = (seed, _width, _height) => {
