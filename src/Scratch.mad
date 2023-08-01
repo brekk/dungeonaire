@@ -1,0 +1,8 @@
+import Ctrl from "Control"
+import IO from "IO"
+
+
+
+main = () => {
+  Ctrl.loop({ n: 1 }, (x) => x.n < 1025, (x) => ({ n: x.n * 2 })) |> IO.trace("looped!")
+}

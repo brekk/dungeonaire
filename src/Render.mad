@@ -7,7 +7,7 @@ import List from "List"
 import String from "String"
 import Terminal from "Terminal"
 
-import { Area, anyAreaContainsPoint, isBoundary } from "./Area"
+import { Area, anyAreaContainsPoint, getBoundingBox, isBoundary } from "./Area"
 import { Dungeon } from "./Dungeon"
 import { hex } from "./String"
 import { Tile, TileFloor, TileWall, walkTileMap } from "./Tile"
@@ -32,7 +32,7 @@ export renderTile = (stageWidth, stageHeight, tile) => where(tile) {
     (
       tk == TileFloor
         ? " "
-        : tk == TileWall && isBoundary(0, 0, stageWidth, stageHeight, tx, ty)
+        : tk == TileWall && isBoundary(getBoundingBox(Area(0, 0, stageWidth, stageHeight)), tx, ty)
           ? ty == 0
             ? renderBoundary(Terminal.text.green, tx)
             : renderBoundary(Terminal.text.yellow, ty)

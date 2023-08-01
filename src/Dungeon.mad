@@ -165,7 +165,7 @@ growMazeAtPoint = (roomCheck, tilemap, x, y) => {
 }
 
 mapSize :: TileMap -> Integer
-mapSize = (tilemap) => pipe(
+export mapSize = (tilemap) => pipe(
   List.length,
   (x) => pipe(
     List.nth(0),
@@ -182,7 +182,7 @@ export createDungeon = (seed, _width, _height) => {
   height = stageDimension(_height)
   _areas = makeRooms(100, width, height, 3, seed)
   IO.trace("ROOMS", _areas)
-  _tiles = makeTileMap(height, width)
+  _tiles = makeTileMap(width, height)
   getTile = atIndex(_tiles)
   inRoom = anyAreaContainsPoint(_areas)
   tiles = pipe(

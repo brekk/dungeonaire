@@ -1,0 +1,16 @@
+import { assertEquals, test } from "Test"
+
+import { atan2, isEven, makeOdd, minimum } from "./Math"
+
+
+
+test("minimum - under", () => assertEquals(100, minimum(100, 5)))
+test("minimum - over", () => assertEquals(120, minimum(100, 120)))
+
+test("isEven - true", () => assertEquals(true, isEven(100)))
+test("isEven - false", () => assertEquals(false, isEven(101)))
+
+test("makeOdd - true", () => assertEquals(101, makeOdd(100)))
+test("makeOdd - false", () => assertEquals(101, makeOdd(101)))
+
+test("atan2", () => assertEquals(1.4056476493802699, atan2(90, 15)))

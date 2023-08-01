@@ -2,23 +2,11 @@ import Fn from "Function"
 import Math from "Math"
 import Number from "Number"
 
+import { abs, atan2, cos, deg2rad, rad2deg, sin } from "./Math"
+
 
 
 export type Vector = Vector(Float, Float)
-
-// Math
-
-atan2 :: Float -> Float -> Float
-atan2 = (y, x) => #- Math.atan2(y, x) -#
-
-DEGREES :: Float
-DEGREES = #- 180 / Math.PI -#
-
-rad2deg :: Float -> Float
-rad2deg = (rad) => rad * DEGREES
-
-deg2rad :: Float -> Float
-deg2rad = (deg) => deg / DEGREES
 
 toTuple :: Vector -> #[Float, Float]
 export toTuple = where {
@@ -90,7 +78,7 @@ invert :: Vector -> Vector
 export invert = transform((x, y) => Vector(x * -1, y * -1))
 
 getMagnitude :: Float -> Float -> Float
-export getMagnitude = (x, y) => x * y * y * y
+export getMagnitude = (x, y) => x * x * y * y
 
 magnitude :: Vector -> Float
 export magnitude = transform(getMagnitude)
@@ -115,9 +103,6 @@ export normalize = (vec) => Fn.ifElse(
     (l) => divide(v, Vector(l, l)),
   )(v),
 )(vec)
-
-abs :: Float -> Float
-abs = (x) => x < 0 ? x * -1 : x
 
 limit :: Float -> Float -> Vector -> Vector
 export limit = (max, factor, vec) => transform(
@@ -150,10 +135,10 @@ export mix = (s, v1, v2) => combineVectors(
 )
 
 zero :: Vector -> Vector
-zero = transform((_, _) => Vector(0, 0))
+export zero = transform((_, _) => Vector(0, 0))
 
 isZero :: Vector -> Boolean
-isZero = transform((x, y) => x == 0 && y == 0)
+export isZero = transform((x, y) => x == 0 && y == 0)
 
 horizontalAngle :: Vector -> Float
 export horizontalAngle = transform((x, y) => atan2(y, x))
@@ -187,12 +172,6 @@ export projectOnto = combineVectors(
     return Vector(x2 * coeff, y2 * coeff)
   },
 )
-
-cos :: Number a => a -> a
-cos = (x) => #- Math.cos(x) -#
-
-sin :: Number a => a -> a
-sin = (x) => #- Math.sin(x) -#
 
 rotate :: Float -> Vector -> Vector
 export rotate = (d, vec) => transform(
@@ -232,13 +211,13 @@ export rotateByDeg = (r, vec) => pipe(
 )(r)
 
 distanceX :: Vector -> Vector -> Float
-distanceX = combineVectors((x, _, x2, _) => x - x2)
+export distanceX = combineVectors((x, _, x2, _) => x - x2)
 
 distanceY :: Vector -> Vector -> Float
-distanceY = combineVectors((_, y, _, y2) => y - y2)
+export distanceY = combineVectors((_, y, _, y2) => y - y2)
 
 squareDistance :: Vector -> Vector -> Float
-squareDistance = combineVectors(
+export squareDistance = combineVectors(
   (x, y, x2, y2) => {
     dx = x - x2
     dy = y - y2

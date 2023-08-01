@@ -1,0 +1,90 @@
+import type { CardinalNeighbors, Neighbors, Tile, TileMap } from "./Tile"
+
+import { Just, Nothing } from "Maybe"
+import { assertEquals, test } from "Test"
+
+import {
+  Tile,
+  TileFloor,
+  TileWall,
+  atIndex,
+  getCardinalNeighbors,
+  getNeighbors,
+  getPossibleCardinalPaths,
+  makeTileMap,
+  walkTileMap,
+} from "./Tile"
+
+
+
+SAMPLE_TILEMAP :: TileMap
+SAMPLE_TILEMAP = [
+  [Tile(TileWall, 0, 0), Tile(TileWall, 0, 1)],
+  [Tile(TileWall, 1, 0), Tile(TileWall, 1, 1)],
+  [Tile(TileWall, 2, 0), Tile(TileWall, 2, 1)],
+]
+
+test("makeTileMap", () => assertEquals(SAMPLE_TILEMAP, makeTileMap(3, 2)))
+
+test(
+  "atIndex - Just",
+  () => assertEquals(Just(Tile(TileWall, 1, 0)), atIndex(SAMPLE_TILEMAP, 1, 0)),
+)
+
+test("atIndex - Nothing", () => assertEquals(Nothing, atIndex(SAMPLE_TILEMAP, 10000, 1000)))
+
+test(
+  "walkTileMap",
+  () => assertEquals(
+    [
+      [Tile(TileFloor, 0, 0), Tile(TileFloor, 0, 1)],
+      [Tile(TileWall, 1, 0), Tile(TileWall, 1, 1)],
+      [Tile(TileWall, 2, 0), Tile(TileWall, 2, 1)],
+    ],
+    walkTileMap(
+      where {
+        Tile(tk, tx, ty) =>
+          Tile(tx == 0 ? TileFloor : TileWall, tx, ty)
+      },
+      SAMPLE_TILEMAP,
+    ),
+  ),
+)
+
+test(
+  "getNeighbors",
+  () => assertEquals(
+    {
+      e: Just(Tile(TileWall, 2, 1)),
+      n: Just(Tile(TileWall, 1, 0)),
+      ne: Just(Tile(TileWall, 2, 0)),
+      nw: Just(Tile(TileWall, 0, 0)),
+      s: Nothing,
+      se: Nothing,
+      sw: Nothing,
+      w: Just(Tile(TileWall, 0, 1)),
+    },
+    getNeighbors(SAMPLE_TILEMAP, 1, 1),
+  ),
+)
+
+test(
+  "getCardinalNeighbors",
+  () => assertEquals(
+    {
+      e: Just(Tile(TileWall, 2, 1)),
+      n: Just(Tile(TileWall, 1, 0)),
+      s: Nothing,
+      w: Just(Tile(TileWall, 0, 1)),
+    },
+    getCardinalNeighbors(SAMPLE_TILEMAP, 1, 1),
+  ),
+)
+
+test(
+  "getPossibleCardinalPaths",
+  () => assertEquals(
+    [Just(Tile(TileWall, 2, 1)), Just(Tile(TileWall, 1, 0)), Just(Tile(TileWall, 0, 1))],
+    getPossibleCardinalPaths(SAMPLE_TILEMAP, 1, 1),
+  ),
+)

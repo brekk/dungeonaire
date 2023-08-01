@@ -50,7 +50,7 @@ export atIndex = (tileMap, x, y) => pipe(
 )(tileMap)
 
 makeTileMap :: Integer -> Integer -> TileMap
-export makeTileMap = (height, width) => pipe(
+export makeTileMap = (width, height) => pipe(
   List.range(0),
   map(
     (x) => pipe(

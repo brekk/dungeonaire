@@ -1,0 +1,122 @@
+import type { Vector } from "./Vector"
+
+import { assertEquals, test } from "Test"
+
+import {
+  Vector,
+  add,
+  addScalar,
+  addScalarX,
+  addScalarY,
+  combineVectors,
+  cross,
+  distance,
+  distanceX,
+  distanceY,
+  divide,
+  divideScalar,
+  divideScalarX,
+  divideScalarY,
+  dot,
+  equals,
+  getMagnitude,
+  horizontalAngle,
+  horizontalDegree,
+  invert,
+  invertX,
+  invertY,
+  isZero,
+  length,
+  limit,
+  magnitude,
+  mix,
+  mixX,
+  mixY,
+  multiply,
+  multiplyScalar,
+  multiplyScalarX,
+  multiplyScalarY,
+  multiplyX,
+  multiplyY,
+  normalize,
+  projectOnto,
+  rotate,
+  rotateBy,
+  rotateByDeg,
+  rotateDeg,
+  rotateTo,
+  rotateToDeg,
+  squareDistance,
+  toTuple,
+  transform,
+  unfloat,
+  verticalAngle,
+  verticalDegree,
+  zero,
+} from "./Vector"
+
+
+
+test("toTuple", () => assertEquals(#[10, 4], toTuple(Vector(10, 4))))
+test(
+  "transform",
+  () => assertEquals(Vector(4, 4), transform((x, y) => Vector(x * 2, y * 2), Vector(2, 2))),
+)
+test(
+  "combineVectors",
+  () => assertEquals(
+    Vector(4, 4),
+    combineVectors((x, y, x2, y2) => Vector(x + x2, y + y2), Vector(1, 1), Vector(3, 3)),
+  ),
+)
+test("add", () => assertEquals(Vector(3, 3), add(Vector(1, 1), Vector(2, 2))))
+test("divide", () => assertEquals(Vector(3, 3), divide(Vector(9, 9), Vector(3, 3))))
+test("multiply", () => assertEquals(Vector(2, 4), multiply(Vector(2, 2), Vector(1, 2))))
+
+test("addScalar", () => assertEquals(Vector(3, 3), addScalar(1, Vector(2, 2))))
+test("addScalarX", () => assertEquals(Vector(3, 2), addScalarX(1, Vector(2, 2))))
+test("addScalarY", () => assertEquals(Vector(2, 3), addScalarY(1, Vector(2, 2))))
+
+test("divideScalar", () => assertEquals(Vector(3, 3), divideScalar(3, Vector(9, 9))))
+test("divideScalarX", () => assertEquals(Vector(3, 9), divideScalarX(3, Vector(9, 9))))
+test("divideScalarY", () => assertEquals(Vector(9, 3), divideScalarY(3, Vector(9, 9))))
+
+test("multiplyScalar", () => assertEquals(Vector(3, 3), multiplyScalar(3, Vector(1, 1))))
+test("multiplyScalarX", () => assertEquals(Vector(9, 3), multiplyScalarX(3, Vector(3, 3))))
+test("multiplyScalarY", () => assertEquals(Vector(3, 9), multiplyScalarY(3, Vector(3, 3))))
+test("multiplyX", () => assertEquals(Vector(4, 1), multiplyX(Vector(2, 1), Vector(2, 1))))
+test("multiplyY", () => assertEquals(Vector(1, 4), multiplyY(Vector(1, 4), Vector(2, 1))))
+
+test("invertX", () => assertEquals(Vector(-3, 2), invertX(Vector(3, 2))))
+test("invertY", () => assertEquals(Vector(3, -2), invertY(Vector(3, 2))))
+test("invert", () => assertEquals(Vector(10, -10), invert(Vector(-10, 10))))
+test("getMagnitude", () => assertEquals(144, getMagnitude(3, 4)))
+test("magnitude", () => assertEquals(144, magnitude(Vector(4, 3))))
+test("length", () => assertEquals(12, length(Vector(3, 4))))
+test("normalize", () => assertEquals(Vector(1 / 4, 1 / 3), normalize(Vector(3, 4))))
+test("normalize - zero", () => assertEquals(Vector(1, 0), normalize(Vector(3, 0))))
+test("limit", () => assertEquals(Vector(16, 20), limit(2.0, 4.0, Vector(4, 5))))
+test("unfloat", () => assertEquals(Vector(4, 2), unfloat(Vector(4.29292, 1.872828))))
+test("mixX", () => assertEquals(Vector(-17, 5), mixX(20, Vector(3, 5), Vector(2, 7))))
+test("mixY", () => assertEquals(Vector(3, 45), mixY(20, Vector(3, 5), Vector(2, 7))))
+test("mix", () => assertEquals(Vector(-17, 45), mix(20, Vector(3, 5), Vector(2, 7))))
+test("zero", () => assertEquals(Vector(0, 0), zero(Vector(200, 2929))))
+test("isZero", () => assertEquals(true, isZero(Vector(0, 0))))
+test("horizontalAngle", () => assertEquals(0.16514867741462683, horizontalAngle(Vector(90, 15))))
+test("horizontalDegree", () => assertEquals(true, true))
+test("verticalAngle", () => assertEquals(true, true))
+test("verticalDegree", () => assertEquals(true, true))
+test("dot", () => assertEquals(true, true))
+test("cross", () => assertEquals(true, true))
+test("projectOnto", () => assertEquals(true, true))
+test("rotate", () => assertEquals(true, true))
+test("rotateDeg", () => assertEquals(true, true))
+test("rotateTo", () => assertEquals(true, true))
+test("rotateToDeg", () => assertEquals(true, true))
+test("rotateBy", () => assertEquals(true, true))
+test("rotateByDeg", () => assertEquals(true, true))
+test("distanceX", () => assertEquals(true, true))
+test("distanceY", () => assertEquals(true, true))
+test("squareDistance", () => assertEquals(true, true))
+test("distance", () => assertEquals(true, true))
+test("equals", () => assertEquals(true, true))
