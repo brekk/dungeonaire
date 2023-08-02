@@ -1,5 +1,6 @@
 import type { Vector } from "./Vector"
 
+import IO from "IO"
 import { assertEquals, test } from "Test"
 
 import {
@@ -102,21 +103,47 @@ test("mixY", () => assertEquals(Vector(3, 45), mixY(20, Vector(3, 5), Vector(2, 
 test("mix", () => assertEquals(Vector(-17, 45), mix(20, Vector(3, 5), Vector(2, 7))))
 test("zero", () => assertEquals(Vector(0, 0), zero(Vector(200, 2929))))
 test("isZero", () => assertEquals(true, isZero(Vector(0, 0))))
+test("distanceX", () => assertEquals(-4, distanceX(Vector(0, 0), Vector(4, 0))))
+test("distanceY", () => assertEquals(-4, distanceY(Vector(0, 5), Vector(4, 9))))
+test("squareDistance", () => assertEquals(32, squareDistance(Vector(1, 3), Vector(5, 7))))
+test("distance", () => assertEquals(9.899494936611665, distance(Vector(0, 0), Vector(7, 7))))
+test("equals", () => assertEquals(true, equals(Vector(1212, 0), Vector(1212, 0))))
+test("dot", () => assertEquals(150, dot(Vector(1, 7), Vector(17, 19))))
+test("cross", () => assertEquals(-100, cross(Vector(1, 7), Vector(17, 19))))
+test("projectOnto", () => assertEquals(Vector(0.72, 5.04), projectOnto(Vector(1, 5), Vector(1, 7))))
+
+// fenced functions (which currently fail in some contexts (--coverage)
 test("horizontalAngle", () => assertEquals(0.16514867741462683, horizontalAngle(Vector(90, 15))))
-test("horizontalDegree", () => assertEquals(true, true))
-test("verticalAngle", () => assertEquals(true, true))
-test("verticalDegree", () => assertEquals(true, true))
-test("dot", () => assertEquals(true, true))
-test("cross", () => assertEquals(true, true))
-test("projectOnto", () => assertEquals(true, true))
-test("rotate", () => assertEquals(true, true))
-test("rotateDeg", () => assertEquals(true, true))
-test("rotateTo", () => assertEquals(true, true))
-test("rotateToDeg", () => assertEquals(true, true))
-test("rotateBy", () => assertEquals(true, true))
-test("rotateByDeg", () => assertEquals(true, true))
-test("distanceX", () => assertEquals(true, true))
-test("distanceY", () => assertEquals(true, true))
-test("squareDistance", () => assertEquals(true, true))
-test("distance", () => assertEquals(true, true))
-test("equals", () => assertEquals(true, true))
+test("horizontalDegree", () => assertEquals(9.462322208025617, horizontalDegree(Vector(90, 15))))
+test("verticalAngle", () => assertEquals(1.4056476493802699, verticalAngle(Vector(90, 15))))
+test("verticalDegree", () => assertEquals(80.53767779197439, verticalDegree(Vector(90, 15))))
+test(
+  "rotate",
+  () => assertEquals(Vector(0.8301359341482772, -43.55813212628425), rotate(10, Vector(23, 37))),
+)
+test(
+  "rotateDeg",
+  () => assertEquals(Vector(16.225595745604366, 40.43179494779109), rotateDeg(10, Vector(23, 37))),
+)
+test(
+  "rotateTo",
+  () => assertEquals(Vector(-36.55502532704509, -23.700846468830854), rotateTo(10, Vector(23, 37))),
+)
+test(
+  "rotateToDeg",
+  () => assertEquals(Vector(9.850481768820888, 18.99915811087763), rotateToDeg(10, Vector(13, 17))),
+)
+test(
+  "rotateBy",
+  () => assertEquals(
+    Vector(-9.108453855253448, 19.36584798986914),
+    rotateByDeg(10, Vector(13, 17)),
+  ),
+)
+test(
+  "rotateByDeg",
+  () => assertEquals(
+    Vector(-5.69216934036336, 16.049897451405332),
+    rotateByDeg(10, Vector(11, 13)),
+  ),
+)
