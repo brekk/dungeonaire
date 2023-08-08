@@ -6,12 +6,14 @@ import String from "String"
 
 import Dungeon from "./Dungeon"
 import LCG from "./LCG"
+import { atan2 } from "./Math"
 import Maze from "./Maze"
 import { render } from "./Render"
 
 
 
 main = () => {
+  atan2(2, 100) |> IO.trace("YOYOYO")
   pipe(
     Date.getTimestamp,
     LCG.mkSeed,

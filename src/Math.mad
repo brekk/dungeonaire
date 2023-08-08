@@ -1,4 +1,6 @@
+import {} from "Compare"
 import __Math from "Math"
+import {} from "Number"
 
 
 
@@ -11,11 +13,14 @@ export isEven = (x) => __Math.mod(x, 2) == 0
 makeOdd :: Integer -> Integer
 export makeOdd = (x) => isEven(x) ? x + 1 : x
 
-atan2 :: Number a => a -> a -> a
-export atan2 = (a, b) => #- Math.atan2(a, b) -#
+abs :: (Comparable a, Number a) => a -> a
+export abs = (x) => x < 0 ? x * -1 : x
+
+PI :: Float
+PI = 3.14159265358979323846
 
 DEGREES :: Float
-DEGREES = #- 180 / Math.PI -#
+DEGREES = 180 / PI
 
 rad2deg :: Float -> Float
 export rad2deg = (rad) => rad * DEGREES
@@ -23,11 +28,21 @@ export rad2deg = (rad) => rad * DEGREES
 deg2rad :: Float -> Float
 export deg2rad = (deg) => deg / DEGREES
 
-cos :: Number a => a -> a
-export cos = (x) => #- Math.cos(x) -#
+#iftarget js
+
+atan2 :: Number a => a -> a -> a
+export atan2 = (a, b) => #- {
+  return Math.atan2(a, b)
+} -#
+
+cos :: Number a => a -> Float
+export cos = (x) => #- {
+  return Math.cos(x)
+} -#
 
 sin :: Number a => a -> a
-export sin = (x) => #- Math.sin(x) -#
+export sin = (x) => #- {
+  return Math.sin(x)
+} -#
 
-abs :: Float -> Float
-export abs = (x) => x < 0 ? x * -1 : x
+#endif

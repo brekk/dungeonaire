@@ -1,6 +1,6 @@
 import { assertEquals, test } from "Test"
 
-import { atan2, isEven, makeOdd, minimum } from "./Math"
+import { abs, atan2, cos, isEven, makeOdd, minimum, sin } from "./Math"
 
 
 
@@ -13,4 +13,9 @@ test("isEven - false", () => assertEquals(false, isEven(101)))
 test("makeOdd - true", () => assertEquals(101, makeOdd(100)))
 test("makeOdd - false", () => assertEquals(101, makeOdd(101)))
 
-// test("atan2", () => assertEquals(1.4056476493802699, atan2(90, 15)))
+test("abs", () => assertEquals(100, abs(-100)))
+test("abs", () => assertEquals(100, abs(100)))
+
+test("atan2", () => assertEquals(1.4056476493802699, atan2(90, 15)))
+test("cos", () => assertEquals(0.15425144988758405, cos(30)))
+test("sin", () => assertEquals(0.8509035245341184, sin(45)))
