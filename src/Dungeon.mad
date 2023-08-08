@@ -141,8 +141,11 @@ export canCarveCardinally = (tilemap, vec) => {
 cardinalPossibilities :: TileMap -> Vector -> List Vector
 export cardinalPossibilities = (tilemap, vec) => pipe(
   canCarveCardinally(tilemap),
+  IO.trace("carved"),
   List.filter(where { #[dir, can] => can }),
+  IO.trace("filtered"),
   map(where { #[dir, can] => dir }),
+  IO.trace("pasta billy tees"),
 )(vec)
 
 growMazeAtPoint = (roomCheck, tilemap, x, y) => {
