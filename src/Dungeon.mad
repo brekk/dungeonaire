@@ -13,6 +13,7 @@ import Int from "Integer"
 import List from "List"
 import Math from "Math"
 import { Just, Nothing, fromMaybe } from "Maybe"
+import {} from "Number"
 
 import { Area, anyAreaContainsPoint, anyAreaIntersectsArea } from "./Area"
 import LCG from "./LCG"
@@ -51,7 +52,7 @@ boundByStage :: Integer -> Integer -> Integer
 export boundByStage = boundByStageWithDefault(4)
 
 randomPoint :: Integer -> Integer -> Seed -> Integer
-randomPoint = (max, size, seed) => pipe(
+export randomPoint = (max, size, seed) => pipe(
   Math.floor,
   Float.toInteger,
   LCG.toInt(0, $, seed),
@@ -60,7 +61,7 @@ randomPoint = (max, size, seed) => pipe(
 )((max - size) / 2)
 
 calcRoomSize :: Integer -> Integer -> Integer -> Integer -> Seed -> Integer
-calcRoomSize = (size, rectangularity, maximum, edgeDistance, seed) => Float.toInteger(
+export calcRoomSize = (size, rectangularity, maximum, edgeDistance, seed) => Float.toInteger(
   Math.round(
     LCG.toFloat(seed) * Int.toFloat(Math.min(maximum - edgeDistance, size + rectangularity)),
   )
@@ -68,7 +69,7 @@ calcRoomSize = (size, rectangularity, maximum, edgeDistance, seed) => Float.toIn
 )
 
 makeRandomRoom :: Integer -> Integer -> Integer -> Seed -> Area
-makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
+export makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
   size = LCG.toInt(1, 3 + pad, seed) * 2 + 1
   seed2 = LCG.next(seed)
   rect = LCG.toInt(0, 1 + Float.toInteger(Math.floor(size / 2) + 1), seed2) * 2
@@ -87,19 +88,19 @@ makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
 }
 
 makeRooms :: Integer -> Integer -> Integer -> Integer -> Seed -> List Area
-makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
+export makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
   LCG.iterate($, makeRandomRoom(stageWidth, stageHeight, pad), seed),
   List.reduce((agg, x) => !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg, []),
 )(total)
 
 stageDimension :: Integer -> Integer
-stageDimension = pipe(
+export stageDimension = pipe(
   minimum(5),
   makeOdd,
 )
 
 threeSteps :: Vector -> Vector -> Vector
-threeSteps = (dir, vec) => pipe(
+export threeSteps = (dir, vec) => pipe(
   Vx.add(dir),
   Vx.add(dir),
   Vx.add(dir),
@@ -112,6 +113,7 @@ export canCarveFromTilesInDirection = (tilemap, dir, vec) => pipe(
     Vx.Vector(x, y) =>
       pipe(
         atIndex(tilemap, Float.toInteger(x)),
+        IO.trace("AT!"),
         where {
           Just(Tile(tk, tx, ty)) =>
             tk != TileWall
@@ -123,21 +125,21 @@ export canCarveFromTilesInDirection = (tilemap, dir, vec) => pipe(
   },
 )(vec)
 
-alias CardinalMovements = List #[Vector, Boolean]
+export alias CardinalMovements = List #[Vector, Boolean]
 
 canCarveCardinally :: TileMap -> Vector -> CardinalMovements
-canCarveCardinally = (tilemap, vec) => {
+export canCarveCardinally = (tilemap, vec) => {
   canCarve = canCarveFromTilesInDirection(tilemap, $, vec)
   return [
-    #[EAST, canCarve(EAST)],
     #[NORTH, canCarve(NORTH)],
+    #[EAST, canCarve(EAST)],
     #[SOUTH, canCarve(SOUTH)],
     #[WEST, canCarve(WEST)],
   ]
 }
 
 cardinalPossibilities :: TileMap -> Vector -> List Vector
-cardinalPossibilities = (tilemap, vec) => pipe(
+export cardinalPossibilities = (tilemap, vec) => pipe(
   canCarveCardinally(tilemap),
   List.filter(where { #[dir, can] => can }),
   map(where { #[dir, can] => dir }),

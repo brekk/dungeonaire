@@ -2,7 +2,7 @@ import Fn from "Function"
 import Math from "Math"
 import Number from "Number"
 
-import { abs, atan2, cos, deg2rad, rad2deg, sin } from "./Math"
+import { abs, deg2rad, rad2deg } from "./Math"
 
 
 
@@ -140,22 +140,7 @@ export zero = transform((_, _) => Vector(0, 0))
 isZero :: Vector -> Boolean
 export isZero = transform((x, y) => x == 0 && y == 0)
 
-horizontalAngle :: Vector -> Float
-export horizontalAngle = transform((x, y) => atan2(y, x))
 
-horizontalDegree :: Vector -> Float
-export horizontalDegree = pipe(
-  horizontalAngle,
-  rad2deg,
-)
-verticalAngle :: Vector -> Float
-export verticalAngle = transform(atan2)
-
-verticalDegree :: Vector -> Float
-export verticalDegree = pipe(
-  verticalAngle,
-  rad2deg,
-)
 
 dot :: Vector -> Vector -> Float
 export dot = combineVectors((x, y, x2, y2) => x * x2 + y * y2)
@@ -173,6 +158,35 @@ export projectOnto = combineVectors(
   },
 )
 
+distanceX :: Vector -> Vector -> Float
+export distanceX = combineVectors((x, _, x2, _) => x - x2)
+
+distanceY :: Vector -> Vector -> Float
+export distanceY = combineVectors((_, y, _, y2) => y - y2)
+
+squareDistance :: Vector -> Vector -> Float
+export squareDistance = combineVectors(
+  (x, y, x2, y2) => {
+    dx = x - x2
+    dy = y - y2
+    return dx * dx + dy * dy
+  },
+)
+
+distance :: Vector -> Vector -> Float
+export distance = (v1, v2) => pipe(
+  squareDistance(v1),
+  Math.sqrt,
+)(v2)
+
+equals :: Vector -> Vector -> Boolean
+export equals = combineVectors((x, y, x2, y2) => x == x2 && y == y2)
+
+#iftarget js
+import { abs, atan2, cos, deg2rad, rad2deg, sin } from "./Math"
+
+
+
 rotate :: Float -> Vector -> Vector
 export rotate = (d, vec) => transform(
   (x, y) => {
@@ -181,6 +195,23 @@ export rotate = (d, vec) => transform(
     return Vector((x * dCos) - (y * dSin), (x * dSin) + (y * dCos))
   },
   vec,
+)
+
+horizontalAngle :: Vector -> Float
+export horizontalAngle = transform((x, y) => atan2(y, x))
+
+horizontalDegree :: Vector -> Float
+export horizontalDegree = pipe(
+  horizontalAngle,
+  rad2deg,
+)
+verticalAngle :: Vector -> Float
+export verticalAngle = transform(atan2)
+
+verticalDegree :: Vector -> Float
+export verticalDegree = pipe(
+  verticalAngle,
+  rad2deg,
 )
 
 rotateDeg :: Float -> Vector -> Vector
@@ -210,26 +241,5 @@ export rotateByDeg = (r, vec) => pipe(
   rotateBy($, vec),
 )(r)
 
-distanceX :: Vector -> Vector -> Float
-export distanceX = combineVectors((x, _, x2, _) => x - x2)
 
-distanceY :: Vector -> Vector -> Float
-export distanceY = combineVectors((_, y, _, y2) => y - y2)
-
-squareDistance :: Vector -> Vector -> Float
-export squareDistance = combineVectors(
-  (x, y, x2, y2) => {
-    dx = x - x2
-    dy = y - y2
-    return dx * dx + dy * dy
-  },
-)
-
-distance :: Vector -> Vector -> Float
-export distance = (v1, v2) => pipe(
-  squareDistance(v1),
-  Math.sqrt,
-)(v2)
-
-equals :: Vector -> Vector -> Boolean
-export equals = combineVectors((x, y, x2, y2) => x == x2 && y == y2)
+#endif

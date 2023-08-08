@@ -38,7 +38,7 @@ export findWithIndex = (fn, _list) => pipe(
         count: agg.count + 1,
         result: fn(a, agg.count + 1) ? Just(#[agg.count + 1, a]) : Nothing,
       },
-    { count: 0, result: Nothing },
+    { count: -1, result: Nothing },
   ),
   .result,
 )(_list)

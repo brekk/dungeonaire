@@ -72,10 +72,7 @@ export LCG_C = 0
  * @since 0.0.1
  */
 perturbation :: Integer -> Integer -> Integer -> Integer -> Integer
-export perturbation = (n, b, a, d) => mod(
-  Float.toInteger(Int.toFloat(b) * Int.toFloat(n) + Int.toFloat(a)),
-  d,
-)
+export perturbation = (n, b, a, d) => mod(b * n + a, d)
 
 
 /**
@@ -115,6 +112,8 @@ mkSeed :: Integer -> Seed
 export mkSeed = pipe(
   modClamp(SEED_MIN, SEED_MAX),
   Seed,
+  next,
+  next,
 )
 
 stringToInt :: String -> Integer
@@ -291,6 +290,7 @@ export iterate = (steps, fn, seed) => pipe(
  *   iterateBinary(10, LCG.shuffle, String.split("", "madlib"))
  * )(100)
  */
+iterateBinary :: Integer -> (a -> Seed -> a) -> a -> Seed -> List a
 export iterateBinary = (steps, fn, active, seed) => pipe(
   iterateBinaryWithProof(steps, fn, active),
   dropProof,

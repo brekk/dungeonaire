@@ -1,0 +1,96 @@
+import Math from "Math"
+import Number from "Number"
+import String from "String"
+import { assertEquals, test } from "Test"
+import Wish from "Wish"
+
+import {
+  LCG_A,
+  LCG_C,
+  LCG_M,
+  SEED_MAX,
+  SEED_MIN,
+  Seed,
+  intGradient,
+  iterateBinary,
+  mapSeed,
+  mkSeed,
+  mkSeedFromString,
+  modClamp,
+  next,
+  perturbation,
+  shuffle,
+  stepN,
+  toInt,
+  unSeed,
+} from "./LCG"
+
+
+
+test(
+  "mkSeed will clamp values over the max",
+  () => assertEquals(Seed(365211588), mkSeed(SEED_MAX + 1)),
+)
+test(
+  "mkSeed will clamp values under the min",
+  () => assertEquals(Seed(1964877853), mkSeed(SEED_MIN - 1)),
+)
+test(
+  "unSeed",
+  () => {
+    x = 100
+    return assertEquals(x, unSeed(Seed(x)))
+  },
+)
+test("mapSeed", () => assertEquals(Seed(100), mapSeed((x) => x * 2, Seed(50))))
+test(
+  "step",
+  () => {
+    a = mkSeed(100)
+    b = next(a)
+    return assertEquals(290469780, unSeed(b))
+  },
+)
+
+
+test(
+  "stepN",
+  () => pipe(
+    stepN(5),
+    assertEquals(Seed(1068550103), $),
+  )(mkSeed(100)),
+)
+
+
+test("perturbation", () => assertEquals(perturbation(LCG_C, LCG_A, 23, LCG_M), 23))
+test("perturbation zeroes", () => assertEquals(perturbation(0, 0, 0, 1), 0))
+test("perturbation ones", () => assertEquals(perturbation(1, 2, 3, 2), 1))
+
+threeClamped = modClamp($, $, 3)
+test("modClamp - under", () => assertEquals(24, threeClamped(7, 21)))
+test("modClamp - over", () => assertEquals(3, threeClamped(1, 1000)))
+
+test("intGradient", () => assertEquals(500, intGradient(0, 1000, 0.5)))
+test("intGradient", () => assertEquals(234, intGradient(0, 1000, 0.234234234)))
+
+test(
+  "iterateBinary",
+  () => {
+    seed = mkSeedFromString("iterateBinary")
+    ALPHABET = String.split("", "abcdefghjiklmnopqrtuvwxyz")
+    shuffled = pipe(
+      iterateBinary(2, shuffle, ALPHABET),
+      map(String.join("")),
+    )(seed)
+    return assertEquals(
+      ["ticuqyvkedmbanzjhrfwgoxlp", "ydcwhlgmquaitnpefrkovzxbj", "lucofbvahwmdynjqkrizgpxte"],
+      shuffled,
+    )
+  },
+)
+
+test("toInt", () => assertEquals(4, toInt(0, 30, mkSeed(100))))
+test(
+  "toInt - doesn't return the same value with two different seeds",
+  () => assertEquals(false, toInt(0, 30, mkSeed(200)) == toInt(0, 30, mkSeed(100))),
+)

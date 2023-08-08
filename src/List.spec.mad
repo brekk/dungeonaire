@@ -1,0 +1,17 @@
+import { Just, Nothing } from "Maybe"
+import { assertEquals, test } from "Test"
+
+import { findWithIndex, set, setMaybe } from "./List"
+
+
+
+test("set", () => assertEquals([1, 2, 100, 4, 5], set(2, 100, [1, 2, 3, 4, 5])))
+test("setMaybe", () => assertEquals([1, 2, 100, 4, 5], setMaybe(2, Just(100), [1, 2, 3, 4, 5])))
+test(
+  "setMaybe - invalid",
+  () => assertEquals([1, 2, 3, 4, 5], setMaybe(2, Nothing, [1, 2, 3, 4, 5])),
+)
+test(
+  "findWithIndex",
+  () => assertEquals(Just(#[2, 30]), findWithIndex((x, _) => x == 30, [10, 20, 30, 40, 50])),
+)

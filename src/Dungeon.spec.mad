@@ -1,21 +1,36 @@
 import type { Dungeon } from "./Dungeon"
 
+import IO from "IO"
 import { assertEquals, test } from "Test"
 
+import { Area } from "./Area"
 import {
+  Dungeon,
   EAST,
   NORTH,
   SOUTH,
   WEST,
   boundByStage,
   boundByStageWithDefault,
+  calcRoomSize,
+  canCarveCardinally,
   canCarveFromTilesInDirection,
+  cardinalPossibilities,
   createDungeon,
+  makeRandomRoom,
+  makeRooms,
   mapSize,
+  randomPoint,
+  stageDimension,
+  threeSteps,
 } from "./Dungeon"
+import LCG from "./LCG"
+import { Tile, TileFloor, TileWall, makeTileMap, walkTileMap } from "./Tile"
 import { Vector } from "./Vector"
 
 
+
+TEST_SEED = LCG.mkSeed(1000)
 
 test(
   "CARDINAL DIRECTIONS",
@@ -24,7 +39,85 @@ test(
     [NORTH, SOUTH, EAST, WEST],
   ),
 )
+test("calcRoomSize", () => assertEquals(4, calcRoomSize(10, 3, 15, 7, TEST_SEED)))
 test("boundByStageWithDefault", () => assertEquals(6, boundByStageWithDefault(5, 7, 11)))
+test("boundByStage", () => assertEquals(2, boundByStage(2, 20)))
+
+test("randomPoint", () => assertEquals(7, randomPoint(20, 3, TEST_SEED)))
+test("randomPoint - reset", () => assertEquals(1, randomPoint(2, 3, TEST_SEED)))
+
 test("canCarveFromTilesInDirection", () => assertEquals(true, true))
 test("createDungeon", () => assertEquals(true, true))
+
 test("mapSize", () => assertEquals(true, true))
+
+test(
+  "makeRandomRoom",
+  () => assertEquals(Area(1, 77, 7, 18), makeRandomRoom(100, 100, 7, TEST_SEED)),
+)
+test(
+  "makeRooms",
+  () => assertEquals(
+    [
+      Area(1, 79, 6, 14),
+      Area(81, 51, 12, 1),
+      Area(51, 41, 1, 25),
+      Area(35, 21, 9, 9),
+      Area(23, 55, 3, 5),
+    ],
+    makeRooms(5, 100, 100, 4, TEST_SEED),
+  ),
+)
+
+test("stageDimension", () => assertEquals(15, stageDimension(14)))
+test("stageDimension - min", () => assertEquals(5, stageDimension(3)))
+
+test("threeSteps", () => assertEquals(Vector(3, 3), threeSteps(Vector(1, 1), Vector(0, 0))))
+
+test(
+  "canCarveFromTilesInDirection - false",
+  () => assertEquals(
+    false,
+    canCarveFromTilesInDirection(makeTileMap(4, 4), Vector(1, 0), Vector(0, 0)),
+  ),
+)
+
+box = pipe(
+  walkTileMap(
+    where {
+      Tile(_, x, y) =>
+        Tile(x == 0 || x == 5 || y == 0 || y == 5 ? TileWall : TileFloor, x, y)
+    },
+  ),
+)(makeTileMap(5, 5))
+
+test(
+  "canCarveFromTilesInDirection - true",
+  () => assertEquals(true, canCarveFromTilesInDirection(box, Vector(1, 0), Vector(1, 3))),
+)
+test(
+  "canCarveFromTilesInDirection - false",
+  () => assertEquals(false, canCarveFromTilesInDirection(box, Vector(1, 0), Vector(2, 3))),
+)
+test(
+  "canCarveCardinally",
+  () => assertEquals(
+    [
+      #[Vector(0, 1), true],
+      #[Vector(1, 0), true],
+      #[Vector(0, -1), false],
+      #[Vector(-1, 0), false],
+    ],
+    canCarveCardinally(box, Vector(1, 1)),
+  ),
+)
+
+/*
+test(
+  "cardinalPossibilities",
+  () => assertEquals(
+    [Vector(0, 1), Vector(1, 0), Vector(-1, 0)],
+    cardinalPossibilities(box, Vector(1, 1)),
+  ),
+)
+*/
