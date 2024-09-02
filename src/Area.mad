@@ -15,6 +15,12 @@ export getBoundingBox = where {
     Box(y, x + w, y + h, x)
 }
 
+padBoundingBox :: Integer -> BoundingBox -> BoundingBox
+export padBoundingBox = (i, bb) => where(bb) {
+  Box(t, r, b, l) =>
+    Box(t - i, r + i, b + i, l - i)
+}
+
 containsPoint :: Area -> Integer -> Integer -> Boolean
 export containsPoint = (area, x, y) => pipe(
   getBoundingBox,
@@ -24,18 +30,25 @@ export containsPoint = (area, x, y) => pipe(
   },
 )(area)
 
-intersects :: Area -> Area -> Boolean
-export intersects = (j, k) => {
-  jj = getBoundingBox(j)
-  kk = getBoundingBox(k)
+intersectsWithPadding :: Integer -> Area -> Area -> Boolean
+export intersectsWithPadding = (i, j, k) => {
+  box = pipe(
+    getBoundingBox,
+    padBoundingBox(i),
+  )
+  jj = box(j)
+  kk = box(k)
   return where(#[jj, kk]) {
     #[Box(t, r, b, l), Box(t2, r2, b2, l2)] =>
       !(l2 > r || r2 < l || t2 > b || b2 < t)
   }
 }
 
-anyIntersects :: List Area -> Area -> Boolean
-export anyIntersects = (areas, r) => any(intersects(r), areas)
+export intersects = intersectsWithPadding(0)
+
+anyIntersectsWithPadding :: Integer -> List Area -> Area -> Boolean
+export anyIntersectsWithPadding = (i, areas, r) => any(intersectsWithPadding(i, r), areas)
+export anyIntersects = anyIntersectsWithPadding(0)
 
 anyContainsPoint :: List Area -> Integer -> Integer -> Boolean
 export anyContainsPoint = (areas, x, y) => any(containsPoint($, x, y))(areas)

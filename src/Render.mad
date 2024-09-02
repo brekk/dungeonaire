@@ -1,16 +1,16 @@
-import type { Area } from "./Area"
-import type { Dungeon } from "./Dungeon"
-import type { Tile, TileMap } from "./Tile"
+import type { Area } from "@/Area"
+import type { Dungeon } from "@/Dungeon"
+import type { Tile, TileMap } from "@/Tile"
 
 import Fn from "Function"
 import List from "List"
 import String from "String"
 import Terminal from "Terminal"
 
-import { Area, anyAreaContainsPoint, getBoundingBox, isBoundary } from "./Area"
-import { Dungeon } from "./Dungeon"
-import { hex } from "./String"
-import { Tile, TileFloor, TileWall, walkTileMap } from "./Tile"
+import { Area, anyContainsPoint, getBoundingBox, isBoundary } from "@/Area"
+import { Dungeon } from "@/Dungeon"
+import { hex } from "@/String"
+import { Tile, TileFloor, TileWall, walkTileMap } from "@/Tile"
 
 
 

@@ -20,7 +20,7 @@ import R from "Random"
 
 import { Vector, add } from "Invective"
 
-import { Area, anyContainsPoint, anyIntersects } from "@/Area"
+import { Area, anyContainsPoint, anyIntersects, anyIntersectsWithPadding } from "@/Area"
 import { makeOdd, minimum } from "@/Math"
 import {
   Tile,
@@ -85,7 +85,7 @@ export makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
 makeRooms :: Integer -> Integer -> Integer -> Integer -> Random -> List Area
 export makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
   List.repeatWith(() => makeRandomRoom(stageWidth, stageHeight, pad, seed)),
-  List.reduce((agg, x) => !anyIntersects(agg, x) ? [...agg, x] : agg, []),
+  List.reduce((agg, x) => !anyIntersectsWithPadding(1, agg, x) ? [...agg, x] : agg, []),
 )(total)
 
 stageDimension :: Integer -> Integer
@@ -179,10 +179,9 @@ export mapSize = (tilemap) => pipe(
 
 createDungeon :: Random -> Integer -> Integer -> Dungeon
 export createDungeon = (seed, _width, _height) => {
-  IO.trace("SEED", seed)
   width = stageDimension(_width)
   height = stageDimension(_height)
-  _areas = makeRooms(100, width, height, 3, seed)
+  _areas = makeRooms(400, width, height, 3, seed)
   IO.trace("ROOMS", _areas)
   _tiles = makeTileMap(width, height)
   getTile = atIndex(_tiles)
