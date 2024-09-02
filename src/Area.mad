@@ -1,6 +1,4 @@
-import Fn from "Function"
-import IO from "IO"
-import {} from "List"
+import { any } from "List"
 
 
 
@@ -12,13 +10,13 @@ export type BoundingBox = Box(Integer, Integer, Integer, Integer)
 
 
 getBoundingBox :: Area -> BoundingBox
-export getBoundingBox = (area) => where(area) {
+export getBoundingBox = where {
   Area(x, y, w, h) =>
     Box(y, x + w, y + h, x)
 }
 
-areaContainsPoint :: Area -> Integer -> Integer -> Boolean
-export areaContainsPoint = (area, x, y) => pipe(
+containsPoint :: Area -> Integer -> Integer -> Boolean
+export containsPoint = (area, x, y) => pipe(
   getBoundingBox,
   where {
     Box(t, r, b, l) =>
@@ -26,8 +24,8 @@ export areaContainsPoint = (area, x, y) => pipe(
   },
 )(area)
 
-areaIntersectsArea :: Area -> Area -> Boolean
-export areaIntersectsArea = (j, k) => {
+intersects :: Area -> Area -> Boolean
+export intersects = (j, k) => {
   jj = getBoundingBox(j)
   kk = getBoundingBox(k)
   return where(#[jj, kk]) {
@@ -36,14 +34,14 @@ export areaIntersectsArea = (j, k) => {
   }
 }
 
-anyAreaIntersectsArea :: List Area -> Area -> Boolean
-export anyAreaIntersectsArea = (areas, r) => Fn.any((area) => areaIntersectsArea(area, r), areas)
+anyIntersects :: List Area -> Area -> Boolean
+export anyIntersects = (areas, r) => any(intersects(r), areas)
 
-anyAreaContainsPoint :: List Area -> Integer -> Integer -> Boolean
-export anyAreaContainsPoint = (areas, x, y) => Fn.any(areaContainsPoint($, x, y))(areas)
+anyContainsPoint :: List Area -> Integer -> Integer -> Boolean
+export anyContainsPoint = (areas, x, y) => any(containsPoint($, x, y))(areas)
 
 isEdge :: Integer -> Integer -> Integer -> Boolean
-export isEdge = (min, max, point) => point == min || point == max
+export isEdge = (min, max, z) => z == min || z == max
 
 isBoundary :: BoundingBox -> Integer -> Integer -> Boolean
 export isBoundary = (box, x, y) => pipe(

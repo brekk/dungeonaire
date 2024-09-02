@@ -1,5 +1,15 @@
-.repl
-.coverage
+# core build
 build
-.tests
+
+# modules
+madlib_modules
+node_modules
+
+# temp files
+.run
 .module_cache
+.docs
+.coverage
+.tests
+.vscode
+.repl

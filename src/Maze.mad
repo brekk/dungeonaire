@@ -1,4 +1,5 @@
-import type { Seed } from "./LCG"
+import type { Seed } from "Random"
+
 import type { TileMap } from "./Tile"
 
 import IO from "IO"

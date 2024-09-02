@@ -1,7 +1,9 @@
-import type { Area } from "./Area"
-import type { Seed } from "./LCG"
-import type { TileMap } from "./Tile"
-import type { Vector } from "./Vector"
+import type { Random } from "Random"
+
+import type { Vector } from "Invective"
+
+import type { Area } from "@/Area"
+import type { TileMap } from "@/Tile"
 
 import Compare from "Compare"
 import Ctrl from "Control"
@@ -14,10 +16,12 @@ import List from "List"
 import Math from "Math"
 import { Just, Nothing, fromMaybe } from "Maybe"
 import {} from "Number"
+import R from "Random"
 
-import { Area, anyAreaContainsPoint, anyAreaIntersectsArea } from "./Area"
-import LCG from "./LCG"
-import { makeOdd, minimum } from "./Math"
+import { Vector, add } from "Invective"
+
+import { Area, anyContainsPoint, anyIntersects } from "@/Area"
+import { makeOdd, minimum } from "@/Math"
 import {
   Tile,
   TileFloor,
@@ -26,24 +30,23 @@ import {
   getPossibleCardinalPaths,
   makeTileMap,
   walkTileMap,
-} from "./Tile"
-import Vx from "./Vector"
+} from "@/Tile"
 
 
 
 NORTH :: Vector
-export NORTH = Vx.Vector(0, 1)
+export NORTH = Vector(0, 1)
 
 SOUTH :: Vector
-export SOUTH = Vx.Vector(0, -1)
+export SOUTH = Vector(0, -1)
 
 EAST :: Vector
-export EAST = Vx.Vector(1, 0)
+export EAST = Vector(1, 0)
 
 WEST :: Vector
-export WEST = Vx.Vector(-1, 0)
+export WEST = Vector(-1, 0)
 
-export type Dungeon = Dungeon(Seed, Integer, Integer, TileMap, List Area)
+export type Dungeon = Dungeon(Random, Integer, Integer, TileMap, List Area)
 
 boundByStageWithDefault :: Integer -> Integer -> Integer -> Integer
 export boundByStageWithDefault = (edge, minima, dimension) => Math.min(minima, dimension - edge)
@@ -51,46 +54,38 @@ export boundByStageWithDefault = (edge, minima, dimension) => Math.min(minima, d
 boundByStage :: Integer -> Integer -> Integer
 export boundByStage = boundByStageWithDefault(4)
 
-randomPoint :: Integer -> Integer -> Seed -> Integer
+randomPoint :: Integer -> Integer -> Random -> Integer
 export randomPoint = (max, size, seed) => pipe(
   Math.floor,
   Float.toInteger,
-  LCG.toInt(0, $, seed),
+  R.integer(0, $, seed),
   (r) => r * 2 + 1,
   Fn.when((v) => v + size > max, () => Math.max(1, max - size - 1)),
 )((max - size) / 2)
 
-calcRoomSize :: Integer -> Integer -> Integer -> Integer -> Seed -> Integer
+calcRoomSize :: Integer -> Integer -> Integer -> Integer -> Random -> Integer
 export calcRoomSize = (size, rectangularity, maximum, edgeDistance, seed) => Float.toInteger(
-  Math.round(
-    LCG.toFloat(seed) * Int.toFloat(Math.min(maximum - edgeDistance, size + rectangularity)),
-  )
+  Math.round(R.float(seed) * Int.toFloat(Math.min(maximum - edgeDistance, size + rectangularity)))
     + 1,
 )
 
-makeRandomRoom :: Integer -> Integer -> Integer -> Seed -> Area
+makeRandomRoom :: Integer -> Integer -> Integer -> Random -> Area
 export makeRandomRoom = (stageWidth, stageHeight, pad, seed) => {
-  size = LCG.toInt(1, 3 + pad, seed) * 2 + 1
-  seed2 = LCG.next(seed)
-  rect = LCG.toInt(0, 1 + Float.toInteger(Math.floor(size / 2) + 1), seed2) * 2
-  seed3 = LCG.stepN(2, seed)
-  isHotdog = LCG.toBool(seed3)
-  seed4 = LCG.stepN(3, seed)
-  width = calcRoomSize(size, isHotdog ? 0 : rect, stageWidth, 4, seed4)
-  seed5 = LCG.stepN(4, seed)
-  height = calcRoomSize(size, !isHotdog ? 0 : rect, stageHeight, 4, seed5)
-  seed6 = LCG.stepN(5, seed)
-  x = randomPoint(stageWidth, width, seed6)
-  seed7 = LCG.stepN(6, seed)
-  y = randomPoint(stageHeight, height, seed7)
+  size = R.integer(1, 3 + pad, seed) * 2 + 1
+  rect = R.integer(0, 1 + Float.toInteger(Math.floor(size / 2) + 1), seed) * 2
+  isHotdog = R.boolean(seed)
+  width = calcRoomSize(size, isHotdog ? 0 : rect, stageWidth, 4, seed)
+  height = calcRoomSize(size, !isHotdog ? 0 : rect, stageHeight, 4, seed)
+  x = randomPoint(stageWidth, width, seed)
+  y = randomPoint(stageHeight, height, seed)
   area = Area(x, y, width, height)
   return area
 }
 
-makeRooms :: Integer -> Integer -> Integer -> Integer -> Seed -> List Area
+makeRooms :: Integer -> Integer -> Integer -> Integer -> Random -> List Area
 export makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
-  LCG.iterate($, makeRandomRoom(stageWidth, stageHeight, pad), seed),
-  List.reduce((agg, x) => !anyAreaIntersectsArea(agg, x) ? [...agg, x] : agg, []),
+  List.repeatWith(() => makeRandomRoom(stageWidth, stageHeight, pad, seed)),
+  List.reduce((agg, x) => !anyIntersects(agg, x) ? [...agg, x] : agg, []),
 )(total)
 
 stageDimension :: Integer -> Integer
@@ -101,16 +96,16 @@ export stageDimension = pipe(
 
 threeSteps :: Vector -> Vector -> Vector
 export threeSteps = (dir, vec) => pipe(
-  Vx.add(dir),
-  Vx.add(dir),
-  Vx.add(dir),
+  add(dir),
+  add(dir),
+  add(dir),
 )(vec)
 
 canCarveFromTilesInDirection :: TileMap -> Vector -> Vector -> Boolean
 export canCarveFromTilesInDirection = (tilemap, dir, vec) => pipe(
   threeSteps(dir),
   where {
-    Vx.Vector(x, y) =>
+    Vector(x, y) =>
       pipe(
         atIndex(tilemap, Float.toInteger(x)),
         IO.trace("AT!"),
@@ -148,7 +143,7 @@ export cardinalPossibilities = (tilemap, vec) => pipe(
 
 growMazeAtPoint = (roomCheck, tilemap, x, y) => {
   isFloor = roomCheck(x, y)
-  prevVector = Vx.Vector(x, y)
+  prevVector = Vector(x, y)
   cells = [prevVector]
 
   iterations = List.reduce(
@@ -164,7 +159,11 @@ growMazeAtPoint = (roomCheck, tilemap, x, y) => {
     { count: 0, prevVector, toRemove: [], cells },
   )
   // init, pred, transformer -- ends when false
-  if (isFloor) { tilemap } else { tilemap }
+  if (isFloor) {
+    tilemap
+  } else {
+    tilemap
+  }
 }
 
 mapSize :: TileMap -> Integer
@@ -178,7 +177,7 @@ export mapSize = (tilemap) => pipe(
   )(tilemap),
 )(tilemap)
 
-createDungeon :: Seed -> Integer -> Integer -> Dungeon
+createDungeon :: Random -> Integer -> Integer -> Dungeon
 export createDungeon = (seed, _width, _height) => {
   IO.trace("SEED", seed)
   width = stageDimension(_width)
@@ -187,7 +186,7 @@ export createDungeon = (seed, _width, _height) => {
   IO.trace("ROOMS", _areas)
   _tiles = makeTileMap(width, height)
   getTile = atIndex(_tiles)
-  inRoom = anyAreaContainsPoint(_areas)
+  inRoom = anyContainsPoint(_areas)
   tiles = pipe(
     walkTileMap(where { Tile(_, tx, ty) => Tile(inRoom(tx, ty) ? TileFloor : TileWall, tx, ty) }),
   )(_tiles)
