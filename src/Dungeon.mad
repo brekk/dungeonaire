@@ -21,7 +21,7 @@ import R from "Random"
 import { Vector, add } from "Invective"
 
 import { Area, anyContainsPoint, anyIntersects, anyIntersectsWithPadding } from "@/Area"
-import { makeOdd, minimum } from "@/Math"
+import { makeOdd } from "@/Math"
 import {
   Tile,
   TileFloor,
@@ -90,7 +90,7 @@ export makeRooms = (total, stageWidth, stageHeight, pad, seed) => pipe(
 
 stageDimension :: Integer -> Integer
 export stageDimension = pipe(
-  minimum(5),
+  Math.max($, 5),
   makeOdd,
 )
 
@@ -183,7 +183,7 @@ export createDungeon = (seed, _width, _height) => {
   height = stageDimension(_height)
   _areas = makeRooms(400, width, height, 3, seed)
   IO.trace("ROOMS", _areas)
-  _tiles = makeTileMap(width, height)
+  _tiles = makeTileMap(TileWall, width, height)
   getTile = atIndex(_tiles)
   inRoom = anyContainsPoint(_areas)
   tiles = pipe(

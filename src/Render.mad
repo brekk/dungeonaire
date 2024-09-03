@@ -3,6 +3,7 @@ import type { Dungeon } from "@/Dungeon"
 import type { Tile, TileMap } from "@/Tile"
 
 import Fn from "Function"
+import { identity } from "Function"
 import List from "List"
 import String from "String"
 import Terminal from "Terminal"
@@ -26,16 +27,16 @@ export renderBoundary = (fn, i) => pipe(
   fn,
 )(i)
 
-renderTile :: Integer -> Integer -> Tile -> String
-export renderTile = (stageWidth, stageHeight, tile) => where(tile) {
+renderTileWithColor :: Boolean -> Integer -> Integer -> Tile -> String
+export renderTileWithColor = (colorize, stageWidth, stageHeight, tile) => where(tile) {
   Tile(tk, tx, ty) =>
     (
       tk == TileFloor
         ? " "
         : tk == TileWall && isBoundary(getBoundingBox(Area(0, 0, stageWidth, stageHeight)), tx, ty)
           ? ty == 0
-            ? renderBoundary(Terminal.text.green, tx)
-            : renderBoundary(Terminal.text.yellow, ty)
+            ? renderBoundary(colorize ? Terminal.text.green : identity, tx)
+            : renderBoundary(colorize ? Terminal.text.yellow : identity, ty)
           : "#"
     )
 }
@@ -51,18 +52,20 @@ renderFinalLine = (h, r) => r
     )(h)
     ++ RED_HASH
 
-renderRooms :: Integer -> Integer -> TileMap -> List String
-renderRooms = (w, h, tiles) => pipe(
-  walkTileMap(renderTile(w, h)),
+renderRoomsWithColor :: Boolean -> Integer -> Integer -> TileMap -> List String
+export renderRoomsWithColor = (colorize, w, h, tiles) => pipe(
+  walkTileMap(renderTileWithColor(colorize, w, h)),
   map(String.join("")),
 )(tiles)
+
+export renderRooms = renderRoomsWithColor(false)
 
 render :: Dungeon -> String
 export render = pipe(
   where {
     Dungeon(_, w, h, tiles, areas) =>
       pipe(
-        renderRooms(w, h),
+        renderRoomsWithColor(true, w, h),
         String.join(RED_HASH ++ "\n"),
         renderFinalLine(h),
       )(tiles)

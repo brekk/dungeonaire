@@ -49,13 +49,13 @@ export atIndex = (tileMap, x, y) => pipe(
   },
 )(tileMap)
 
-makeTileMap :: Integer -> Integer -> TileMap
-export makeTileMap = (width, height) => pipe(
+makeTileMap :: TileType -> Integer -> Integer -> TileMap
+export makeTileMap = (tt, width, height) => pipe(
   List.range(0),
   map(
     (x) => pipe(
       List.range(0),
-      map((y) => Tile(TileWall, x, y)),
+      map((y) => Tile(tt, x, y)),
     )(height),
   ),
 )(width)

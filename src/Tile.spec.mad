@@ -1,11 +1,17 @@
-import type { CardinalNeighbors, Neighbors, Tile, TileMap } from "./Tile"
+import type { CardinalNeighbors, Neighbors, Tile, TileMap } from "@/Tile"
 
 import { Just, Nothing } from "Maybe"
-import { assertEquals, test } from "Test"
+import String from "String"
 
+import { caseN2, report } from "Study"
+
+import { renderRooms } from "@/Render"
 import {
   Tile,
+  TileDoor,
   TileFloor,
+  TileHazard,
+  TileVoid,
   TileWall,
   atIndex,
   getCardinalNeighbors,
@@ -13,78 +19,96 @@ import {
   getPossibleCardinalPaths,
   makeTileMap,
   walkTileMap,
-} from "./Tile"
+} from "@/Tile"
 
 
 
-SAMPLE_TILEMAP :: TileMap
-SAMPLE_TILEMAP = [
-  [Tile(TileWall, 0, 0), Tile(TileWall, 0, 1)],
-  [Tile(TileWall, 1, 0), Tile(TileWall, 1, 1)],
-  [Tile(TileWall, 2, 0), Tile(TileWall, 2, 1)],
-]
+FIXTURE_TILE_MAP = makeTileMap(TileVoid, 6, 6)
 
-test("makeTileMap", () => assertEquals(SAMPLE_TILEMAP, makeTileMap(3, 2)))
+modifyTestMap = where {
+  Tile(_, x, y) =>
+    Tile(x == 0 || x == 6 || y == 0 || y == 6 ? TileWall : TileVoid, x, y)
+}
 
-test(
-  "atIndex - Just",
-  () => assertEquals(Just(Tile(TileWall, 1, 0)), atIndex(SAMPLE_TILEMAP, 1, 0)),
-)
-
-test("atIndex - Nothing", () => assertEquals(Nothing, atIndex(SAMPLE_TILEMAP, 10000, 1000)))
-
-test(
+report(
+  pipe(
+    walkTileMap(modifyTestMap),
+    renderRooms(6, 4),
+    String.join("\n"),
+  ),
   "walkTileMap",
-  () => assertEquals(
-    [
-      [Tile(TileFloor, 0, 0), Tile(TileFloor, 0, 1)],
-      [Tile(TileWall, 1, 0), Tile(TileWall, 1, 1)],
-      [Tile(TileWall, 2, 0), Tile(TileWall, 2, 1)],
+  [
+    #[
+      FIXTURE_TILE_MAP,
+      `012345
+1#####
+2#####
+3#####
+4#####
+5#####`,
     ],
-    walkTileMap(
-      where {
-        Tile(tk, tx, ty) =>
-          Tile(tx == 0 ? TileFloor : TileWall, tx, ty)
-      },
-      SAMPLE_TILEMAP,
-    ),
-  ),
+  ],
 )
 
-test(
+report(
+  caseN2(
+    (x, y) => pipe(
+      walkTileMap(modifyTestMap),
+      atIndex($, x, y),
+    )(FIXTURE_TILE_MAP),
+  ),
+  "atIndex",
+  [#[#[5, 5], Just(Tile(TileVoid, 5, 5))], #[#[-1, 2], Nothing]],
+)
+
+report(
+  caseN2(
+    (x, y) => pipe(
+      walkTileMap(modifyTestMap),
+      getNeighbors($, x, y),
+    )(FIXTURE_TILE_MAP),
+  ),
   "getNeighbors",
-  () => assertEquals(
-    {
-      e: Just(Tile(TileWall, 2, 1)),
-      n: Just(Tile(TileWall, 1, 0)),
-      ne: Just(Tile(TileWall, 2, 0)),
-      nw: Just(Tile(TileWall, 0, 0)),
-      s: Nothing,
-      se: Nothing,
-      sw: Nothing,
-      w: Just(Tile(TileWall, 0, 1)),
-    },
-    getNeighbors(SAMPLE_TILEMAP, 1, 1),
-  ),
+  [
+    #[
+      #[5, 5],
+      {
+        e: Nothing,
+        n: Just(Tile(TileVoid, 5, 4)),
+        ne: Nothing,
+        nw: Just(Tile(TileVoid, 4, 4)),
+        s: Nothing,
+        sw: Nothing,
+        se: Nothing,
+        w: Just(Tile(TileVoid, 4, 5)),
+      },
+    ],
+  ],
 )
 
-test(
+report(
+  caseN2(
+    (x, y) => pipe(
+      walkTileMap(modifyTestMap),
+      getCardinalNeighbors($, x, y),
+    )(FIXTURE_TILE_MAP),
+  ),
   "getCardinalNeighbors",
-  () => assertEquals(
-    {
-      e: Just(Tile(TileWall, 2, 1)),
-      n: Just(Tile(TileWall, 1, 0)),
-      s: Nothing,
-      w: Just(Tile(TileWall, 0, 1)),
-    },
-    getCardinalNeighbors(SAMPLE_TILEMAP, 1, 1),
-  ),
+  [
+    #[
+      #[5, 5],
+      { e: Nothing, n: Just(Tile(TileVoid, 5, 4)), s: Nothing, w: Just(Tile(TileVoid, 4, 5)) },
+    ],
+  ],
 )
 
-test(
-  "getPossibleCardinalPaths",
-  () => assertEquals(
-    [Just(Tile(TileWall, 2, 1)), Just(Tile(TileWall, 1, 0)), Just(Tile(TileWall, 0, 1))],
-    getPossibleCardinalPaths(SAMPLE_TILEMAP, 1, 1),
+report(
+  caseN2(
+    (x, y) => pipe(
+      walkTileMap(modifyTestMap),
+      getPossibleCardinalPaths($, x, y),
+    )(FIXTURE_TILE_MAP),
   ),
+  "getPossibleCardinalPaths",
+  [#[#[5, 5], [Just(Tile(TileVoid, 5, 4)), Just(Tile(TileVoid, 4, 5))]]],
 )
