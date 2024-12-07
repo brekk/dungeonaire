@@ -1,14 +1,12 @@
-import type { Area } from "./Area"
-
 import { assertEquals, test } from "Test"
 
 import { Area, Box } from "./Area"
 import {
-  anyAreaContainsPoint,
-  anyAreaIntersectsArea,
-  areaContainsPoint,
-  areaIntersectsArea,
+  anyContainsPoint,
+  anyIntersects,
+  containsPoint,
   getBoundingBox,
+  intersects,
   isBoundary,
   isEdge,
 } from "./Area"
@@ -16,18 +14,18 @@ import {
 
 
 test(
-  "areaIntersectsArea - yes",
+  "intersects - yes",
   () => {
     a = Area(1, 1, 10, 10)
-    return assertEquals(true, areaIntersectsArea(a, a))
+    return assertEquals(true, intersects(a, a))
   },
 )
 test(
-  "areaIntersectsArea - no",
+  "intersects - no",
   () => {
     a = Area(1, 1, 10, 10)
     b = Area(-100, 1, 2, 2)
-    return assertEquals(false, areaIntersectsArea(a, b))
+    return assertEquals(false, intersects(a, b))
   },
 )
 
@@ -39,34 +37,25 @@ test(
   },
 )
 
+test("containsPoint - yes", () => assertEquals(true, containsPoint(Area(0, 0, 10, 10), 1, 1)))
+
+test("containsPoint - no", () => assertEquals(false, containsPoint(Area(0, 0, 10, 10), 11, 11)))
+
 test(
-  "areaContainsPoint - yes",
-  () => assertEquals(true, areaContainsPoint(Area(0, 0, 10, 10), 1, 1)),
+  "anyIntersects - yes",
+  () => assertEquals(true, anyIntersects([Area(0, 0, 5, 5)], Area(0, 0, 5, 5))),
 )
 
 test(
-  "areaContainsPoint - no",
-  () => assertEquals(false, areaContainsPoint(Area(0, 0, 10, 10), 11, 11)),
+  "anyIntersects - no",
+  () => assertEquals(false, anyIntersects([Area(0, 0, 5, 5)], Area(100, 100, 5, 5))),
 )
 
-test(
-  "anyAreaIntersectsArea - yes",
-  () => assertEquals(true, anyAreaIntersectsArea([Area(0, 0, 5, 5)], Area(0, 0, 5, 5))),
-)
+test("anyContainsPoint - yes", () => assertEquals(true, anyContainsPoint([Area(0, 0, 5, 5)], 1, 1)))
 
 test(
-  "anyAreaIntersectsArea - no",
-  () => assertEquals(false, anyAreaIntersectsArea([Area(0, 0, 5, 5)], Area(100, 100, 5, 5))),
-)
-
-test(
-  "anyAreaContainsPoint - yes",
-  () => assertEquals(true, anyAreaContainsPoint([Area(0, 0, 5, 5)], 1, 1)),
-)
-
-test(
-  "anyAreaContainsPoint - no",
-  () => assertEquals(false, anyAreaContainsPoint([Area(0, 0, 5, 5)], 100, 100)),
+  "anyContainsPoint - no",
+  () => assertEquals(false, anyContainsPoint([Area(0, 0, 5, 5)], 100, 100)),
 )
 
 test("isEdge - yes", () => assertEquals(true, isEdge(0, 10, 10)))

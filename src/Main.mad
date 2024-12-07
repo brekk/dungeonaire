@@ -2,22 +2,20 @@ import Date from "Date"
 import IO from "IO"
 import Math from "Math"
 import { fromMaybe } from "Maybe"
+import { generate } from "Random"
 import String from "String"
 
-import Dungeon from "./Dungeon"
-import LCG from "./LCG"
-import { atan2 } from "./Math"
-import Maze from "./Maze"
-import { render } from "./Render"
+import Dungeon from "@/Dungeon"
+import Maze from "@/Maze"
+import { render } from "@/Render"
 
 
 
 main = () => {
-  atan2(2, 100) |> IO.trace("YOYOYO")
   pipe(
     Date.getTimestamp,
-    LCG.mkSeed,
-    Dungeon.createDungeon($, 20, 40),
+    generate,
+    Dungeon.createDungeon($, 30, 60),
     render,
     IO.put,
   )(Date.now())
